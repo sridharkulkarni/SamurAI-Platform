@@ -1,0 +1,20 @@
+{
+  "name": "compliance-support-ai-agent",
+  "version": "1.0.0",
+  "description": "Compliance Support AI Agent - Real-time assistance for customer support agents",
+  "private": true,
+  "scripts": {
+    "dev:backend": "cd apps/backend && npm run dev",
+    "dev:frontend": "cd apps/frontend && pnpm dev",
+    "dev:backend-agent": "cd apps/backend-agent && uvicorn main:app --reload --port 8000"
+  },
+  "keywords": [
+    "compliance",
+    "ai",
+    "customer-support",
+    "real-time"
+  ],
+  "author": "",
+  "license": "MIT"
+}
+
