@@ -34,7 +34,16 @@ backendAgentClient.on('message', (message) => {
   // Forward to all SSE clients for this call
   if (callId && sseClients.has(callId)) {
     const clients = sseClients.get(callId);
-    const sseMessage = formatSSEMessage(type, message.data);
+    
+    // Include timestamp from message level if available
+    const sseData = {
+      ...message.data,
+      timestamp: message.timestamp 
+        ? new Date(message.timestamp).toISOString() 
+        : new Date().toISOString()
+    };
+    
+    const sseMessage = formatSSEMessage(type, sseData);
 
     clients.forEach((res) => {
       try {

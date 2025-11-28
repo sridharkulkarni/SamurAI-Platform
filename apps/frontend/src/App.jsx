@@ -33,11 +33,27 @@ function App() {
 
     switch (eventType) {
       case 'transcription':
-        setTranscripts(prev => [...prev, {
-          text: data.text,
-          timestamp: data.timestamp || new Date().toISOString(),
-          speaker: data.speaker
-        }]);
+        setTranscripts(prev => {
+          const isFinal = data.isFinal !== undefined ? data.isFinal : true;
+          const newTranscript = {
+            text: data.text,
+            timestamp: data.timestamp || new Date().toISOString(),
+            speaker: data.speaker || 'unknown',
+            isFinal: isFinal
+          };
+
+          // If it's an interim transcript, update the last one if it's also interim
+          if (!isFinal && prev.length > 0) {
+            const lastTranscript = prev[prev.length - 1];
+            // Only update if last one is also interim and from same speaker
+            if (!lastTranscript.isFinal && lastTranscript.speaker === newTranscript.speaker) {
+              return [...prev.slice(0, -1), newTranscript];
+            }
+          }
+
+          // Otherwise, append as new transcript
+          return [...prev, newTranscript];
+        });
         break;
 
       case 'compliance_suggestion':
