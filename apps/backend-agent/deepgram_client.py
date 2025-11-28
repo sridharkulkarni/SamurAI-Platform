@@ -67,7 +67,9 @@ class DeepgramStreamingClient:
                             transcript = alternatives[0].get('transcript', '')
                             is_final = data.get('is_final', False)
                             
+                            # LOG: Print only transcript
                             if transcript:
+                                print(f"[Deepgram] Transcript: '{transcript}' | is_final: {is_final} | source: {self.current_source}")
                                 # Pass current source if available
                                 await self.on_transcription_callback(transcript, is_final, speaker=None, source=self.current_source)
                     
@@ -79,8 +81,11 @@ class DeepgramStreamingClient:
                         
                 except json.JSONDecodeError as e:
                     print(f"[Deepgram] Error parsing message: {e}")
+                    print(f"[Deepgram] Raw message: {message[:200]}")  # Print first 200 chars
                 except Exception as e:
                     print(f"[Deepgram] Error processing message: {e}")
+                    import traceback
+                    traceback.print_exc()
                     
         except websockets.exceptions.ConnectionClosed:
             print(f"[Deepgram] Connection closed for call {self.call_id}")

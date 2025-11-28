@@ -47,8 +47,9 @@ class ComplianceChecker:
                 timestamp=datetime.utcnow().isoformat()
             )]
 
-        # Query Vertex AI Knowledge Base
-        kb_context = self.vertex_ai_client.get_compliance_context(transcript_text)
+        # Query Vertex AI Knowledge Base (COMMENTED OUT FOR DEBUGGING)
+        # kb_context = self.vertex_ai_client.get_compliance_context(transcript_text)
+        kb_context = "No compliance rules available (RAG commented out for debugging)"
 
         # Check compliance with OpenAI
         suggestions = await self.openai_client.check_compliance(
@@ -119,8 +120,9 @@ class ComplianceChecker:
                 'suggestions': []
             }
 
-        # Query Vertex AI KB for full context
-        kb_context = self.vertex_ai_client.get_compliance_context(transcript_text)
+        # Query Vertex AI KB for full context (COMMENTED OUT FOR DEBUGGING)
+        # kb_context = self.vertex_ai_client.get_compliance_context(transcript_text)
+        kb_context = "No compliance rules available (RAG commented out for debugging)"
 
         # Check compliance for full transcript
         suggestions = await self.openai_client.check_compliance(

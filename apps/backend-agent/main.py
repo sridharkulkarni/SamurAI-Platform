@@ -74,6 +74,9 @@ async def on_transcription(call_id: str, text: str, is_final: bool, speaker: Opt
         return
 
     timestamp = datetime.utcnow().isoformat()
+    
+    # LOG: Print transcript only
+    print(f"[Backend-Agent] Transcript: '{text}' | call_id: {call_id} | source: {source} | is_final: {is_final}")
 
     # Store transcript in memory
     if call_id not in active_calls:
