@@ -18,28 +18,30 @@ class DeepgramStreamingClient:
         Initialize Deepgram streaming client
         
         Args:
-            on_transcription_callback: Async callback function(text: str, is_final: bool, speaker: str = None)
+            on_transcription_callback: Async callback function(text: str, is_final: bool, speaker: str = None, source: str = None)
         """
         self.api_key = DEEPGRAM_API_KEY
         self.on_transcription_callback = on_transcription_callback
         self.websocket = None
         self.call_id = None
         self.task = None
+        self.current_source = None  # Track current source (agent/customer)
 
     async def start_stream(self, call_id: str):
         """Start Deepgram streaming connection using WebSocket"""
         self.call_id = call_id
         
-        # Deepgram WebSocket URL
+        # Deepgram WebSocket URL with query parameters
         url = f"wss://api.deepgram.com/v1/listen?model=nova-2&language=en-US&smart_format=true&encoding=linear16&sample_rate=44100&channels=1&interim_results=true"
         
+        # Headers for WebSocket connection
         headers = {
             "Authorization": f"Token {self.api_key}"
         }
         
         try:
-            # Connect to Deepgram WebSocket
-            self.websocket = await websockets.connect(url, extra_headers=headers)
+            # Connect to Deepgram WebSocket (websockets library uses 'additional_headers' not 'extra_headers')
+            self.websocket = await websockets.connect(url, additional_headers=headers)
             print(f"[Deepgram] Connected for call {self.call_id}")
             
             # Start listening task
@@ -47,6 +49,8 @@ class DeepgramStreamingClient:
             
         except Exception as e:
             print(f"[Deepgram] Error connecting: {e}")
+            import traceback
+            traceback.print_exc()
             raise
 
     async def _listen(self):
@@ -64,7 +68,8 @@ class DeepgramStreamingClient:
                             is_final = data.get('is_final', False)
                             
                             if transcript:
-                                await self.on_transcription_callback(transcript, is_final)
+                                # Pass current source if available
+                                await self.on_transcription_callback(transcript, is_final, speaker=None, source=self.current_source)
                     
                     # Handle errors
                     if 'error' in data:
@@ -82,10 +87,13 @@ class DeepgramStreamingClient:
         except Exception as e:
             print(f"[Deepgram] Listen error: {e}")
 
-    async def send_audio(self, audio_data: bytes):
+    async def send_audio(self, audio_data: bytes, source: str = None):
         """Send audio chunk to Deepgram"""
         if self.websocket:
             try:
+                # Store source for transcription callback
+                if source:
+                    self.current_source = source
                 await self.websocket.send(audio_data)
             except Exception as e:
                 print(f"[Deepgram] Error sending audio: {e}")
