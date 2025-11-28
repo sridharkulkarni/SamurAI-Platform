@@ -266,6 +266,8 @@ async def backend_websocket(websocket: WebSocket):
 
             message_type = message_data.get('type')
             call_id = message_data.get('callId')
+            
+            print(f"[Backend-Agent] ← Backend [WS] | callId: {call_id} | type: {message_type} | data: {json.dumps(message_data.get('data', {}), indent=2)}")
 
             if not call_id:
                 await websocket.send_text(json.dumps({
