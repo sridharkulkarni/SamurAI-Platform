@@ -4,7 +4,7 @@ import os
 import json
 from typing import List, Dict, Any
 from google.cloud import aiplatform
-from google.auth import default
+from google.oauth2 import service_account
 from google.auth.transport.requests import Request
 from dotenv import load_dotenv
 
@@ -13,6 +13,7 @@ load_dotenv()
 PROJECT_ID = os.getenv('VERTEX_AI_PROJECT_ID')
 LOCATION = os.getenv('VERTEX_AI_LOCATION', 'europe-west3')
 RAG_CORPUS_ID = os.getenv('VERTEX_AI_RAG_CORPUS_ID')
+CREDENTIALS_PATH = os.getenv('GOOGLE_APPLICATION_CREDENTIALS')
 
 # Initialize Vertex AI
 aiplatform.init(project=PROJECT_ID, location=LOCATION)
@@ -24,7 +25,17 @@ class VertexAIClient:
         self.project_id = PROJECT_ID
         self.location = LOCATION
         self.rag_corpus_id = RAG_CORPUS_ID
-        self.credentials, _ = default()
+        
+        # Load service account credentials with proper scopes
+        if CREDENTIALS_PATH and os.path.exists(CREDENTIALS_PATH):
+            self.credentials = service_account.Credentials.from_service_account_file(
+                CREDENTIALS_PATH,
+                scopes=['https://www.googleapis.com/auth/cloud-platform']
+            )
+        else:
+            # Fallback to default credentials
+            from google.auth import default
+            self.credentials, _ = default(scopes=['https://www.googleapis.com/auth/cloud-platform'])
 
     def query_rag_corpus(self, query_text: str, max_results: int = 5) -> List[Dict[str, Any]]:
         """
@@ -42,8 +53,9 @@ class VertexAIClient:
             # The API endpoint for retrieving contexts from RAG corpus
             import requests
             
-            # Get access token
-            self.credentials.refresh(Request())
+            # Get access token with proper scopes
+            if not self.credentials.valid:
+                self.credentials.refresh(Request())
             access_token = self.credentials.token
             
             # RAG API endpoint
