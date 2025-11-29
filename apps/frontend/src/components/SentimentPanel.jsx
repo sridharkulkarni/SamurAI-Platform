@@ -1,9 +1,9 @@
 /** Right panel showing sentiment analysis and AI suggestions */
 
 import { useMemo } from 'react';
-import { FiZap, FiTrendingUp, FiTrendingDown, FiMinus } from 'react-icons/fi';
+import { FiZap, FiTrendingUp, FiTrendingDown, FiMinus, FiFileText, FiAlertTriangle, FiCheckCircle } from 'react-icons/fi';
 
-export function SentimentPanel({ transcripts = [], suggestions = [] }) {
+export function SentimentPanel({ transcripts = [], suggestions = [], postCallData = null }) {
   // Calculate sentiment from transcripts (simplified - in real app, this would come from backend)
   const sentimentData = useMemo(() => {
     // Simple sentiment calculation based on keywords (placeholder)
@@ -218,6 +218,123 @@ export function SentimentPanel({ transcripts = [], suggestions = [] }) {
           </div>
         )}
       </div>
+
+      {/* Post-Call Analysis Section */}
+      {postCallData && postCallData.complianceReport && (
+        <div style={{
+          backgroundColor: 'var(--color-white)',
+          borderRadius: 'var(--radius-lg)',
+          padding: 'var(--spacing-5)',
+          boxShadow: 'var(--shadow-sm)',
+          border: '1px solid var(--color-neutral-200)'
+        }}>
+          <div style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 'var(--spacing-2)',
+            marginBottom: 'var(--spacing-4)'
+          }}>
+            <FiFileText size={20} color="var(--color-primary)" />
+            <h3 style={{
+              fontSize: 'var(--font-size-lg)',
+              fontWeight: 'var(--font-weight-semibold)',
+              color: 'var(--color-neutral-900)',
+              margin: 0
+            }}>
+              Post-Call Analysis
+            </h3>
+          </div>
+
+          {/* Issues Summary */}
+          <div style={{
+            marginBottom: 'var(--spacing-4)',
+            padding: 'var(--spacing-3)',
+            backgroundColor: 'var(--color-neutral-50)',
+            borderRadius: 'var(--radius-md)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}>
+            <span style={{
+              fontSize: 'var(--font-size-sm)',
+              color: 'var(--color-neutral-600)',
+              fontWeight: 'var(--font-weight-medium)'
+            }}>
+              Issues Found:
+            </span>
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--spacing-2)',
+              fontSize: 'var(--font-size-lg)',
+              fontWeight: 'var(--font-weight-bold)',
+              color: postCallData.complianceReport.issues_found > 0 ? 'var(--color-error)' : 'var(--color-success)'
+            }}>
+              {postCallData.complianceReport.issues_found > 0 ? (
+                <FiAlertTriangle size={18} />
+              ) : (
+                <FiCheckCircle size={18} />
+              )}
+              {postCallData.complianceReport.issues_found || 0}
+            </div>
+          </div>
+
+          {/* Compliance Report Summary */}
+          {postCallData.complianceReport.report && (
+            <div style={{
+              fontSize: 'var(--font-size-sm)',
+              lineHeight: 'var(--line-height-relaxed)',
+              color: 'var(--color-neutral-700)',
+              padding: 'var(--spacing-3)',
+              backgroundColor: 'var(--color-neutral-50)',
+              borderRadius: 'var(--radius-md)',
+              borderLeft: '3px solid var(--color-primary)',
+              marginBottom: 'var(--spacing-3)'
+            }}>
+              {typeof postCallData.complianceReport.report === 'string' 
+                ? postCallData.complianceReport.report
+                : JSON.stringify(postCallData.complianceReport.report, null, 2)
+              }
+            </div>
+          )}
+
+          {/* Detailed Suggestions from Report */}
+          {postCallData.complianceReport.suggestions && postCallData.complianceReport.suggestions.length > 0 && (
+            <div style={{
+              marginTop: 'var(--spacing-3)'
+            }}>
+              <div style={{
+                fontSize: 'var(--font-size-sm)',
+                fontWeight: 'var(--font-weight-semibold)',
+                marginBottom: 'var(--spacing-2)',
+                color: 'var(--color-neutral-700)'
+              }}>
+                Recommendations:
+              </div>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: 'var(--spacing-2)'
+              }}>
+                {postCallData.complianceReport.suggestions.map((suggestion, index) => (
+                  <div
+                    key={index}
+                    style={{
+                      fontSize: 'var(--font-size-xs)',
+                      padding: 'var(--spacing-2)',
+                      backgroundColor: 'var(--color-neutral-100)',
+                      borderRadius: 'var(--radius-sm)',
+                      color: 'var(--color-neutral-700)'
+                    }}
+                  >
+                    {suggestion.message || suggestion.text || JSON.stringify(suggestion)}
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Quick Actions Section */}
       <div style={{

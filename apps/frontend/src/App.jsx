@@ -9,7 +9,6 @@ import { AssistButton } from './components/AssistButton';
 import { ConversationPanel } from './components/ConversationPanel';
 import { SentimentPanel } from './components/SentimentPanel';
 import { ComplianceSuggestions } from './components/ComplianceSuggestions';
-import { PostCallSummary } from './components/PostCallSummary';
 import { StatusIndicator } from './components/StatusIndicator';
 import { ErrorAlert } from './components/ErrorAlert';
 import { FiActivity } from 'react-icons/fi';
@@ -26,7 +25,6 @@ function App() {
   const [suggestions, setSuggestions] = useState([]);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [showPostCall, setShowPostCall] = useState(false);
   const [postCallData, setPostCallData] = useState(null);
 
   // Handle transcriptions from audio stream
@@ -99,14 +97,13 @@ function App() {
       case 'call_start':
         setCallId(data.callId);
         setIsCallActive(true);
-        setShowPostCall(false);
+        setPostCallData(null); // Clear previous post-call data
         setTranscripts([]);
         setSuggestions([]);
         break;
 
       case 'call_end':
         setIsCallActive(false);
-        setShowPostCall(true);
         // Fetch post-call summary
         if (data.callId) {
           api.getPostCallSummary(data.callId)
@@ -156,7 +153,7 @@ function App() {
       
       setCallId(newCallId);
       setIsCallActive(true);
-      setShowPostCall(false);
+      setPostCallData(null); // Clear previous post-call data
       setTranscripts([]);
       setSuggestions([]);
       setIsLoading(false);
@@ -282,108 +279,95 @@ function App() {
       )}
 
       {/* Main Content - Three Panel Layout */}
-      {showPostCall && postCallData ? (
-        <main style={{
-          flex: 1,
-          overflow: 'auto',
-          padding: 'var(--spacing-6)'
-        }}>
-          <PostCallSummary
-            callId={postCallData.callId}
-            transcripts={postCallData.transcripts}
-            complianceReport={postCallData.complianceReport}
-          />
-        </main>
-      ) : (
-        <main style={{
-          flex: 1,
+      <main style={{
+        flex: 1,
+        display: 'flex',
+        gap: 'var(--spacing-4)',
+        padding: 'var(--spacing-4)',
+        overflow: 'hidden'
+      }}>
+        {/* Left Panel - Controls */}
+        <div style={{
+          width: '320px',
           display: 'flex',
+          flexDirection: 'column',
           gap: 'var(--spacing-4)',
-          padding: 'var(--spacing-4)',
-          overflow: 'hidden'
+          flexShrink: 0
         }}>
-          {/* Left Panel - Controls */}
-          <div style={{
-            width: '320px',
+          <div className="card" style={{
             display: 'flex',
             flexDirection: 'column',
             gap: 'var(--spacing-4)',
-            flexShrink: 0
+            height: 'fit-content'
           }}>
-            <div className="card" style={{
-              display: 'flex',
-              flexDirection: 'column',
-              gap: 'var(--spacing-4)',
-              height: 'fit-content'
+            <h2 style={{
+              fontSize: 'var(--font-size-lg)',
+              fontWeight: 'var(--font-weight-semibold)',
+              margin: 0,
+              color: 'var(--color-neutral-900)'
             }}>
-              <h2 style={{
-                fontSize: 'var(--font-size-lg)',
-                fontWeight: 'var(--font-weight-semibold)',
-                margin: 0,
-                color: 'var(--color-neutral-900)'
-              }}>
-                Call Controls
-              </h2>
-              <CallControls
-                isActive={isCallActive}
-                onStart={handleStartCall}
-                onStop={handleStopCall}
-                isLoading={isLoading}
-              />
-              <AssistButton
-                onClick={handleAssist}
-                disabled={!isCallActive}
-                isLoading={isLoading}
-              />
-            </div>
-          </div>
-
-          {/* Middle Panel - Conversation */}
-          <div style={{
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-            backgroundColor: 'var(--color-white)',
-            borderRadius: 'var(--radius-lg)',
-            boxShadow: 'var(--shadow-md)',
-            border: '1px solid var(--color-neutral-200)',
-            overflow: 'hidden'
-          }}>
-            <div style={{
-              padding: 'var(--spacing-5)',
-              borderBottom: '1px solid var(--color-neutral-200)',
-              backgroundColor: 'var(--color-neutral-50)'
-            }}>
-              <h2 style={{
-                fontSize: 'var(--font-size-xl)',
-                fontWeight: 'var(--font-weight-semibold)',
-                margin: 0,
-                color: 'var(--color-neutral-900)'
-              }}>
-                Conversation
-              </h2>
-            </div>
-            <div style={{ flex: 1, overflow: 'hidden' }}>
-              <ConversationPanel transcripts={transcripts} />
-            </div>
-          </div>
-
-          {/* Right Panel - Sentiment & Suggestions */}
-          <div style={{
-            width: '360px',
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 'var(--spacing-4)',
-            flexShrink: 0,
-            overflow: 'hidden'
-          }}>
-            <SentimentPanel 
-              transcripts={transcripts} 
-              suggestions={suggestions}
+              Call Controls
+            </h2>
+            <CallControls
+              isActive={isCallActive}
+              onStart={handleStartCall}
+              onStop={handleStopCall}
+              isLoading={isLoading}
+            />
+            <AssistButton
+              onClick={handleAssist}
+              disabled={!isCallActive}
+              isLoading={isLoading}
             />
           </div>
-        </main>
-      )}
+        </div>
+
+        {/* Middle Panel - Conversation */}
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          backgroundColor: 'var(--color-white)',
+          borderRadius: 'var(--radius-lg)',
+          boxShadow: 'var(--shadow-md)',
+          border: '1px solid var(--color-neutral-200)',
+          overflow: 'hidden'
+        }}>
+          <div style={{
+            padding: 'var(--spacing-5)',
+            borderBottom: '1px solid var(--color-neutral-200)',
+            backgroundColor: 'var(--color-neutral-50)'
+          }}>
+            <h2 style={{
+              fontSize: 'var(--font-size-xl)',
+              fontWeight: 'var(--font-weight-semibold)',
+              margin: 0,
+              color: 'var(--color-neutral-900)'
+            }}>
+              Conversation
+            </h2>
+          </div>
+          <div style={{ flex: 1, overflow: 'hidden' }}>
+            <ConversationPanel transcripts={transcripts} />
+          </div>
+        </div>
+
+        {/* Right Panel - Sentiment & Suggestions & Post-Call Analysis */}
+        <div style={{
+          width: '360px',
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 'var(--spacing-4)',
+          flexShrink: 0,
+          overflow: 'hidden'
+        }}>
+          <SentimentPanel 
+            transcripts={transcripts} 
+            suggestions={suggestions}
+            postCallData={postCallData}
+          />
+        </div>
+      </main>
     </div>
   );
 }
