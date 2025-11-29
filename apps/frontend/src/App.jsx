@@ -6,7 +6,8 @@ import { useAudioStream } from './hooks/useAudioStream';
 import { api } from './services/api';
 import { CallControls } from './components/CallControls';
 import { AssistButton } from './components/AssistButton';
-import { TranscriptionDisplay } from './components/TranscriptionDisplay';
+import { ConversationPanel } from './components/ConversationPanel';
+import { SentimentPanel } from './components/SentimentPanel';
 import { ComplianceSuggestions } from './components/ComplianceSuggestions';
 import { PostCallSummary } from './components/PostCallSummary';
 import { StatusIndicator } from './components/StatusIndicator';
@@ -223,104 +224,166 @@ function App() {
   };
 
   return (
-    <div className="app">
+    <div className="app" style={{
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100vh',
+      overflow: 'hidden',
+      backgroundColor: 'var(--color-neutral-50)'
+    }}>
       {/* Header */}
-      <header className="app-header">
-        <div className="header-content">
-          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-3)' }}>
-            <FiActivity size={28} style={{ color: 'var(--color-primary)' }} />
-            <h1 className="app-title">Compliance Support AI Agent</h1>
-          </div>
+      <header style={{
+        backgroundColor: 'var(--color-white)',
+        borderBottom: '1px solid var(--color-neutral-200)',
+        padding: 'var(--spacing-4) var(--spacing-6)',
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        boxShadow: 'var(--shadow-sm)',
+        zIndex: 10
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-3)' }}>
+          <FiActivity size={24} style={{ color: 'var(--color-primary)' }} />
+          <h1 style={{
+            fontSize: 'var(--font-size-xl)',
+            fontWeight: 'var(--font-weight-semibold)',
+            color: 'var(--color-neutral-900)',
+            margin: 0
+          }}>
+            Compliance Support AI Agent
+          </h1>
+        </div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-4)' }}>
           <StatusIndicator status={connectionStatus} />
+          {callId && (
+            <div style={{
+              fontSize: 'var(--font-size-sm)',
+              color: 'var(--color-neutral-600)',
+              fontFamily: 'var(--font-family-mono)'
+            }}>
+              Call: {callId.substring(0, 8)}...
+            </div>
+          )}
         </div>
       </header>
 
-      {/* Main Content */}
-      <main className="app-main">
-        {/* Error Display */}
-        {error && (
-          <div style={{ marginBottom: 'var(--spacing-4)' }}>
-            <ErrorAlert 
-              message={error} 
-              onDismiss={() => setError(null)} 
-            />
-          </div>
-        )}
+      {/* Error Display */}
+      {error && (
+        <div style={{
+          padding: 'var(--spacing-3) var(--spacing-6)',
+          backgroundColor: '#fef2f2',
+          borderBottom: '1px solid var(--color-error)'
+        }}>
+          <ErrorAlert 
+            message={error} 
+            onDismiss={() => setError(null)} 
+          />
+        </div>
+      )}
 
-        {showPostCall && postCallData ? (
-          /* Post-Call Summary */
+      {/* Main Content - Three Panel Layout */}
+      {showPostCall && postCallData ? (
+        <main style={{
+          flex: 1,
+          overflow: 'auto',
+          padding: 'var(--spacing-6)'
+        }}>
           <PostCallSummary
             callId={postCallData.callId}
             transcripts={postCallData.transcripts}
             complianceReport={postCallData.complianceReport}
           />
-        ) : (
-          /* Active Call View */
-          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--spacing-6)' }}>
-            {/* Controls */}
-            <div className="card">
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                flexWrap: 'wrap',
-                gap: 'var(--spacing-4)'
+        </main>
+      ) : (
+        <main style={{
+          flex: 1,
+          display: 'flex',
+          gap: 'var(--spacing-4)',
+          padding: 'var(--spacing-4)',
+          overflow: 'hidden'
+        }}>
+          {/* Left Panel - Controls */}
+          <div style={{
+            width: '320px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 'var(--spacing-4)',
+            flexShrink: 0
+          }}>
+            <div className="card" style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: 'var(--spacing-4)',
+              height: 'fit-content'
+            }}>
+              <h2 style={{
+                fontSize: 'var(--font-size-lg)',
+                fontWeight: 'var(--font-weight-semibold)',
+                margin: 0,
+                color: 'var(--color-neutral-900)'
               }}>
-                <CallControls
-                  isActive={isCallActive}
-                  onStart={handleStartCall}
-                  onStop={handleStopCall}
-                  isLoading={isLoading}
-                />
-                <AssistButton
-                  onClick={handleAssist}
-                  disabled={!isCallActive}
-                  isLoading={isLoading}
-                />
-              </div>
-              {callId && (
-                <div style={{
-                  marginTop: 'var(--spacing-4)',
-                  padding: 'var(--spacing-3)',
-                  backgroundColor: 'var(--color-neutral-50)',
-                  borderRadius: 'var(--radius-md)',
-                  fontSize: 'var(--font-size-sm)',
-                  fontFamily: 'var(--font-family-mono)',
-                  color: 'var(--color-neutral-600)'
-                }}>
-                  Call ID: {callId}
-                </div>
-              )}
+                Call Controls
+              </h2>
+              <CallControls
+                isActive={isCallActive}
+                onStart={handleStartCall}
+                onStop={handleStopCall}
+                isLoading={isLoading}
+              />
+              <AssistButton
+                onClick={handleAssist}
+                disabled={!isCallActive}
+                isLoading={isLoading}
+              />
             </div>
+          </div>
 
-            {/* Transcription */}
-            <div className="card">
+          {/* Middle Panel - Conversation */}
+          <div style={{
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            backgroundColor: 'var(--color-white)',
+            borderRadius: 'var(--radius-lg)',
+            boxShadow: 'var(--shadow-md)',
+            border: '1px solid var(--color-neutral-200)',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              padding: 'var(--spacing-5)',
+              borderBottom: '1px solid var(--color-neutral-200)',
+              backgroundColor: 'var(--color-neutral-50)'
+            }}>
               <h2 style={{
                 fontSize: 'var(--font-size-xl)',
                 fontWeight: 'var(--font-weight-semibold)',
-                marginBottom: 'var(--spacing-4)'
+                margin: 0,
+                color: 'var(--color-neutral-900)'
               }}>
-                Live Transcription
+                Conversation
               </h2>
-              <TranscriptionDisplay transcripts={transcripts} />
             </div>
-
-            {/* Compliance Suggestions */}
-            {suggestions.length > 0 && (
-              <div className="card">
-                <h2 style={{
-                  fontSize: 'var(--font-size-xl)',
-                  fontWeight: 'var(--font-weight-semibold)',
-                  marginBottom: 'var(--spacing-4)'
-                }}>
-                  Compliance Suggestions
-                </h2>
-                <ComplianceSuggestions suggestions={suggestions} />
-              </div>
-            )}
+            <div style={{ flex: 1, overflow: 'hidden' }}>
+              <ConversationPanel transcripts={transcripts} />
+            </div>
           </div>
-        )}
-      </main>
+
+          {/* Right Panel - Sentiment & Suggestions */}
+          <div style={{
+            width: '360px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 'var(--spacing-4)',
+            flexShrink: 0,
+            overflow: 'hidden'
+          }}>
+            <SentimentPanel 
+              transcripts={transcripts} 
+              suggestions={suggestions}
+            />
+          </div>
+        </main>
+      )}
     </div>
   );
 }
