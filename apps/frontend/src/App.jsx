@@ -1,6 +1,6 @@
 /** Main App component with enterprise UI */
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import { useSSE } from './hooks/useSSE';
 import { useAudioStream } from './hooks/useAudioStream';
 import { api } from './services/api';
@@ -208,7 +208,7 @@ function App() {
   };
 
   // Request assist
-  const handleAssist = async () => {
+  const handleAssist = useCallback(async () => {
     if (!callId) {
       setError('No active call');
       return;
@@ -247,7 +247,41 @@ function App() {
       setError(err.message || 'Failed to request assistance');
       setIsLoading(false);
     }
-  };
+  }, [callId, transcripts.length]);
+
+  // Keyboard shortcut: Spacebar to trigger Assist button
+  useEffect(() => {
+    const handleKeyDown = (event) => {
+      // Only trigger if spacebar is pressed
+      if (event.code !== 'Space' && event.key !== ' ') {
+        return;
+      }
+
+      // Don't trigger if user is typing in an input field, textarea, or contenteditable
+      const target = event.target;
+      const isInputField = target.tagName === 'INPUT' || 
+                          target.tagName === 'TEXTAREA' || 
+                          target.isContentEditable;
+
+      if (isInputField) {
+        return;
+      }
+
+      // Only trigger if call is active, not loading, and has transcripts
+      if (isCallActive && !isLoading && transcripts.length > 0) {
+        event.preventDefault(); // Prevent page scroll
+        handleAssist();
+      }
+    };
+
+    // Add event listener
+    window.addEventListener('keydown', handleKeyDown);
+
+    // Cleanup
+    return () => {
+      window.removeEventListener('keydown', handleKeyDown);
+    };
+  }, [isCallActive, isLoading, transcripts.length, handleAssist]);
 
   return (
     <div className="app" style={{
