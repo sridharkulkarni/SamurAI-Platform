@@ -1,163 +1,43 @@
 /** Right panel showing sentiment analysis and AI suggestions */
 
-import { useMemo } from 'react';
-import { FiZap, FiTrendingUp, FiTrendingDown, FiMinus, FiFileText, FiAlertTriangle, FiCheckCircle } from 'react-icons/fi';
+import { FiZap, FiFileText, FiAlertTriangle, FiCheckCircle } from 'react-icons/fi';
 
 export function SentimentPanel({ transcripts = [], suggestions = [], postCallData = null }) {
-  // Calculate sentiment from transcripts (simplified - in real app, this would come from backend)
-  const sentimentData = useMemo(() => {
-    // Simple sentiment calculation based on keywords (placeholder)
-    // In production, this would come from the backend/ML model
-    const customerTranscripts = transcripts.filter(t => t.speaker === 'customer');
-    const text = customerTranscripts.map(t => t.text).join(' ').toLowerCase();
-    
-    const negativeKeywords = ['problem', 'issue', 'error', 'wrong', 'bad', 'not working', 'broken', 'frustrated', 'angry'];
-    const positiveKeywords = ['thanks', 'thank you', 'good', 'great', 'excellent', 'happy', 'satisfied', 'perfect'];
-    
-    let negative = 0;
-    let positive = 0;
-    let neutral = 0;
-    
-    negativeKeywords.forEach(keyword => {
-      if (text.includes(keyword)) negative++;
-    });
-    
-    positiveKeywords.forEach(keyword => {
-      if (text.includes(keyword)) positive++;
-    });
-    
-    const total = negative + positive;
-    if (total === 0) {
-      neutral = 100;
-    } else {
-      negative = Math.round((negative / total) * 100);
-      positive = Math.round((positive / total) * 100);
-      neutral = 100 - negative - positive;
-    }
-    
-    return { negative, neutral, positive };
-  }, [transcripts]);
 
   return (
     <div style={{
       display: 'flex',
       flexDirection: 'column',
-      gap: 'var(--spacing-6)',
+      gap: 'var(--spacing-4)',
       height: '100%',
-      overflowY: 'auto'
+      overflow: 'hidden'
     }}>
-      {/* Customer Sentiment Section */}
-      <div style={{
-        backgroundColor: 'var(--color-white)',
-        borderRadius: 'var(--radius-lg)',
-        padding: 'var(--spacing-5)',
-        boxShadow: 'var(--shadow-sm)',
-        border: '1px solid var(--color-neutral-200)'
-      }}>
-        <h3 style={{
-          fontSize: 'var(--font-size-lg)',
-          fontWeight: 'var(--font-weight-semibold)',
-          marginBottom: 'var(--spacing-4)',
-          color: 'var(--color-neutral-900)'
-        }}>
-          Customer Sentiment
-        </h3>
-        
-        {/* Sentiment Icons */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-around',
-          marginBottom: 'var(--spacing-4)'
-        }}>
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 'var(--spacing-2)',
-            opacity: sentimentData.negative > 20 ? 1 : 0.4
-          }}>
-            <FiTrendingDown size={32} color="var(--color-error)" />
-            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-neutral-600)' }}>
-              Negative
-            </span>
-          </div>
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 'var(--spacing-2)',
-            opacity: sentimentData.neutral > 20 ? 1 : 0.4
-          }}>
-            <FiMinus size={32} color="var(--color-warning)" />
-            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-neutral-600)' }}>
-              Neutral
-            </span>
-          </div>
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            gap: 'var(--spacing-2)',
-            opacity: sentimentData.positive > 20 ? 1 : 0.4
-          }}>
-            <FiTrendingUp size={32} color="var(--color-success)" />
-            <span style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-neutral-600)' }}>
-              Positive
-            </span>
-          </div>
-        </div>
-
-        {/* Sentiment Bar Graph */}
-        <div style={{
-          display: 'flex',
-          height: '24px',
-          borderRadius: 'var(--radius-md)',
-          overflow: 'hidden',
-          border: '1px solid var(--color-neutral-200)'
-        }}>
-          {sentimentData.negative > 0 && (
-            <div style={{
-              width: `${sentimentData.negative}%`,
-              backgroundColor: 'var(--color-error)',
-              transition: 'width 0.3s ease'
-            }} />
-          )}
-          {sentimentData.neutral > 0 && (
-            <div style={{
-              width: `${sentimentData.neutral}%`,
-              backgroundColor: 'var(--color-warning)',
-              transition: 'width 0.3s ease'
-            }} />
-          )}
-          {sentimentData.positive > 0 && (
-            <div style={{
-              width: `${sentimentData.positive}%`,
-              backgroundColor: 'var(--color-success)',
-              transition: 'width 0.3s ease'
-            }} />
-          )}
-        </div>
-      </div>
-
       {/* AI Suggestions Section */}
       <div style={{
         backgroundColor: 'var(--color-white)',
         borderRadius: 'var(--radius-lg)',
-        padding: 'var(--spacing-5)',
+        padding: 'var(--spacing-6)',
         boxShadow: 'var(--shadow-sm)',
-        border: '1px solid var(--color-neutral-200)'
+        border: '1px solid var(--color-neutral-200)',
+        flex: 1,
+        minHeight: 0,
+        overflowY: 'auto',
+        display: 'flex',
+        flexDirection: 'column'
       }}>
         <div style={{
           display: 'flex',
           alignItems: 'center',
           gap: 'var(--spacing-2)',
-          marginBottom: 'var(--spacing-4)'
+          marginBottom: 'var(--spacing-5)',
+          flexShrink: 0
         }}>
-          <FiZap size={20} color="#9333ea" />
+          <FiZap size={24} color="#9333ea" />
           <h3 style={{
-            fontSize: 'var(--font-size-lg)',
+            fontSize: 'var(--font-size-xl)',
             fontWeight: 'var(--font-weight-semibold)',
-            color: 'var(--color-neutral-900)'
+            color: 'var(--color-neutral-900)',
+            margin: 0
           }}>
             AI Suggestion
           </h3>
@@ -167,7 +47,8 @@ export function SentimentPanel({ transcripts = [], suggestions = [], postCallDat
           <div style={{
             display: 'flex',
             flexDirection: 'column',
-            gap: 'var(--spacing-4)'
+            gap: 'var(--spacing-5)',
+            flex: 1
           }}>
             {suggestions.map((suggestion, index) => {
               // Support new format: alert, information, insight
@@ -196,31 +77,36 @@ export function SentimentPanel({ transcripts = [], suggestions = [], postCallDat
                     backgroundColor: parsedAlert ? '#fef2f2' : '#f3e8ff',
                     border: `1px solid ${parsedAlert ? '#ef4444' : '#c084fc'}`,
                     borderRadius: 'var(--radius-md)',
-                    padding: 'var(--spacing-4)',
-                    fontSize: 'var(--font-size-sm)',
+                    padding: 'var(--spacing-5)',
+                    fontSize: 'var(--font-size-base)',
                     lineHeight: 'var(--line-height-relaxed)',
-                    color: 'var(--color-neutral-900)'
+                    color: 'var(--color-neutral-900)',
+                    boxShadow: 'var(--shadow-sm)'
                   }}
                 >
                   {parsedAlert && (
                     <div style={{
-                      marginBottom: 'var(--spacing-3)',
-                      padding: 'var(--spacing-2)',
+                      marginBottom: 'var(--spacing-4)',
+                      padding: 'var(--spacing-4)',
                       backgroundColor: '#fee2e2',
-                      borderRadius: 'var(--radius-sm)',
-                      borderLeft: '3px solid #ef4444'
+                      borderRadius: 'var(--radius-md)',
+                      borderLeft: '4px solid #ef4444'
                     }}>
                       <div style={{
                         fontWeight: 'var(--font-weight-semibold)',
                         color: '#dc2626',
-                        marginBottom: 'var(--spacing-1)',
-                        fontSize: 'var(--font-size-xs)',
+                        marginBottom: 'var(--spacing-2)',
+                        fontSize: 'var(--font-size-sm)',
                         textTransform: 'uppercase',
                         letterSpacing: '0.5px'
                       }}>
                         ⚠️ Alert
                       </div>
-                      <div style={{ color: '#991b1b' }}>
+                      <div style={{ 
+                        color: '#991b1b',
+                        fontSize: 'var(--font-size-base)',
+                        lineHeight: '1.6'
+                      }}>
                         {parsedAlert}
                       </div>
                     </div>
@@ -228,23 +114,27 @@ export function SentimentPanel({ transcripts = [], suggestions = [], postCallDat
                   
                   {parsedInformation && (
                     <div style={{
-                      marginBottom: parsedInsight ? 'var(--spacing-3)' : 0,
-                      padding: 'var(--spacing-2)',
+                      marginBottom: parsedInsight ? 'var(--spacing-4)' : 0,
+                      padding: 'var(--spacing-4)',
                       backgroundColor: '#f0f9ff',
-                      borderRadius: 'var(--radius-sm)',
-                      borderLeft: '3px solid #3b82f6'
+                      borderRadius: 'var(--radius-md)',
+                      borderLeft: '4px solid #3b82f6'
                     }}>
                       <div style={{
                         fontWeight: 'var(--font-weight-semibold)',
                         color: '#1e40af',
-                        marginBottom: 'var(--spacing-1)',
-                        fontSize: 'var(--font-size-xs)',
+                        marginBottom: 'var(--spacing-2)',
+                        fontSize: 'var(--font-size-sm)',
                         textTransform: 'uppercase',
                         letterSpacing: '0.5px'
                       }}>
                         💡 Suggestion
                       </div>
-                      <div style={{ color: '#1e3a8a' }}>
+                      <div style={{ 
+                        color: '#1e3a8a',
+                        fontSize: 'var(--font-size-base)',
+                        lineHeight: '1.6'
+                      }}>
                         {parsedInformation}
                       </div>
                     </div>
@@ -252,23 +142,27 @@ export function SentimentPanel({ transcripts = [], suggestions = [], postCallDat
                   
                   {parsedInsight && (
                     <div style={{
-                      marginTop: 'var(--spacing-3)',
-                      padding: 'var(--spacing-2)',
+                      marginTop: 'var(--spacing-4)',
+                      padding: 'var(--spacing-4)',
                       backgroundColor: '#f9fafb',
-                      borderRadius: 'var(--radius-sm)',
-                      borderLeft: '3px solid #6b7280'
+                      borderRadius: 'var(--radius-md)',
+                      borderLeft: '4px solid #6b7280'
                     }}>
                       <div style={{
                         fontWeight: 'var(--font-weight-semibold)',
                         color: '#374151',
-                        marginBottom: 'var(--spacing-1)',
-                        fontSize: 'var(--font-size-xs)',
+                        marginBottom: 'var(--spacing-2)',
+                        fontSize: 'var(--font-size-sm)',
                         textTransform: 'uppercase',
                         letterSpacing: '0.5px'
                       }}>
                         ℹ️ Insight
                       </div>
-                      <div style={{ color: '#4b5563' }}>
+                      <div style={{ 
+                        color: '#4b5563',
+                        fontSize: 'var(--font-size-base)',
+                        lineHeight: '1.6'
+                      }}>
                         {parsedInsight}
                       </div>
                     </div>
@@ -302,19 +196,22 @@ export function SentimentPanel({ transcripts = [], suggestions = [], postCallDat
         <div style={{
           backgroundColor: 'var(--color-white)',
           borderRadius: 'var(--radius-lg)',
-          padding: 'var(--spacing-5)',
+          padding: 'var(--spacing-4)',
           boxShadow: 'var(--shadow-sm)',
-          border: '1px solid var(--color-neutral-200)'
+          border: '1px solid var(--color-neutral-200)',
+          flexShrink: 0,
+          maxHeight: '200px',
+          overflowY: 'auto'
         }}>
           <div style={{
             display: 'flex',
             alignItems: 'center',
             gap: 'var(--spacing-2)',
-            marginBottom: 'var(--spacing-4)'
+            marginBottom: 'var(--spacing-3)'
           }}>
-            <FiFileText size={20} color="var(--color-primary)" />
+            <FiFileText size={18} color="var(--color-primary)" />
             <h3 style={{
-              fontSize: 'var(--font-size-lg)',
+              fontSize: 'var(--font-size-base)',
               fontWeight: 'var(--font-weight-semibold)',
               color: 'var(--color-neutral-900)',
               margin: 0
@@ -325,8 +222,8 @@ export function SentimentPanel({ transcripts = [], suggestions = [], postCallDat
 
           {/* Issues Summary */}
           <div style={{
-            marginBottom: 'var(--spacing-4)',
-            padding: 'var(--spacing-3)',
+            marginBottom: 'var(--spacing-2)',
+            padding: 'var(--spacing-2)',
             backgroundColor: 'var(--color-neutral-50)',
             borderRadius: 'var(--radius-md)',
             display: 'flex',
@@ -413,33 +310,6 @@ export function SentimentPanel({ transcripts = [], suggestions = [], postCallDat
           )}
         </div>
       )}
-
-      {/* Quick Actions Section */}
-      <div style={{
-        backgroundColor: 'var(--color-white)',
-        borderRadius: 'var(--radius-lg)',
-        padding: 'var(--spacing-5)',
-        boxShadow: 'var(--shadow-sm)',
-        border: '1px solid var(--color-neutral-200)'
-      }}>
-        <h3 style={{
-          fontSize: 'var(--font-size-lg)',
-          fontWeight: 'var(--font-weight-semibold)',
-          marginBottom: 'var(--spacing-4)',
-          color: 'var(--color-neutral-900)'
-        }}>
-          Quick Actions
-        </h3>
-        <div style={{
-          color: 'var(--color-neutral-400)',
-          fontSize: 'var(--font-size-sm)',
-          fontStyle: 'italic',
-          textAlign: 'center',
-          padding: 'var(--spacing-2)'
-        }}>
-          Actions will appear here
-        </div>
-      </div>
     </div>
   );
 }

@@ -39,6 +39,10 @@ class ComplianceChecker:
         # Format full conversation transcript with speaker labels
         transcript_text = self._format_full_transcript(transcript_segments)
 
+        print(f"[Compliance] Transcript segments received: {len(transcript_segments)}")
+        print(f"[Compliance] Formatted transcript length: {len(transcript_text)} characters")
+        print(f"[Compliance] Transcript preview (first 500 chars): {transcript_text[:500]}...")
+
         if not transcript_text:
             return [ComplianceSuggestion(
                 type='info',
@@ -51,6 +55,7 @@ class ComplianceChecker:
         try:
             kb_context = self.vertex_ai_client.get_compliance_context(transcript_text)
             print(f"[Compliance] Retrieved compliance context from Vertex AI (length: {len(kb_context)})")
+            print(f"[Compliance] KB context preview (first 300 chars): {kb_context[:300]}...")
         except Exception as e:
             print(f"[Compliance] Error retrieving Vertex AI context: {e}")
             # Fallback to empty context if Vertex AI fails

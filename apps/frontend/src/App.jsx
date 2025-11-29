@@ -11,7 +11,8 @@ import { SentimentPanel } from './components/SentimentPanel';
 import { ComplianceSuggestions } from './components/ComplianceSuggestions';
 import { StatusIndicator } from './components/StatusIndicator';
 import { ErrorAlert } from './components/ErrorAlert';
-import { FiActivity } from 'react-icons/fi';
+import { FiActivity, FiTrendingUp, FiTrendingDown, FiMinus } from 'react-icons/fi';
+import { useMemo } from 'react';
 import './styles/globals.css';
 import './styles/components.css';
 import './App.css';
@@ -26,6 +27,38 @@ function App() {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [postCallData, setPostCallData] = useState(null);
+
+  // Calculate sentiment from transcripts
+  const sentimentData = useMemo(() => {
+    const customerTranscripts = transcripts.filter(t => t.speaker === 'customer');
+    const text = customerTranscripts.map(t => t.text).join(' ').toLowerCase();
+    
+    const negativeKeywords = ['problem', 'issue', 'error', 'wrong', 'bad', 'not working', 'broken', 'frustrated', 'angry'];
+    const positiveKeywords = ['thanks', 'thank you', 'good', 'great', 'excellent', 'happy', 'satisfied', 'perfect'];
+    
+    let negative = 0;
+    let positive = 0;
+    let neutral = 0;
+    
+    negativeKeywords.forEach(keyword => {
+      if (text.includes(keyword)) negative++;
+    });
+    
+    positiveKeywords.forEach(keyword => {
+      if (text.includes(keyword)) positive++;
+    });
+    
+    const total = negative + positive;
+    if (total === 0) {
+      neutral = 100;
+    } else {
+      negative = Math.round((negative / total) * 100);
+      positive = Math.round((positive / total) * 100);
+      neutral = 100 - negative - positive;
+    }
+    
+    return { negative, neutral, positive };
+  }, [transcripts]);
 
   // Handle transcriptions from audio stream
   const handleTranscription = useCallback((transcript) => {
@@ -310,7 +343,7 @@ function App() {
             color: 'var(--color-neutral-900)',
             margin: 0
           }}>
-            Compliance Support AI Agent
+                  SamurAI
           </h1>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-4)' }}>
@@ -383,6 +416,124 @@ function App() {
               isLoading={isLoading}
             />
           </div>
+
+          {/* Customer Sentiment Section */}
+          <div className="card" style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 'var(--spacing-3)',
+            height: 'fit-content'
+          }}>
+            <h2 style={{
+              fontSize: 'var(--font-size-base)',
+              fontWeight: 'var(--font-weight-semibold)',
+              margin: 0,
+              color: 'var(--color-neutral-900)'
+            }}>
+              Customer Sentiment
+            </h2>
+            
+            {/* Sentiment Icons */}
+            <div style={{
+              display: 'flex',
+              justifyContent: 'space-around',
+              marginBottom: 'var(--spacing-2)'
+            }}>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 'var(--spacing-1)',
+                opacity: sentimentData.negative > 20 ? 1 : 0.4
+              }}>
+                <FiTrendingDown size={24} color="var(--color-error)" />
+                <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-neutral-600)' }}>
+                  Negative
+                </span>
+              </div>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 'var(--spacing-1)',
+                opacity: sentimentData.neutral > 20 ? 1 : 0.4
+              }}>
+                <FiMinus size={24} color="var(--color-warning)" />
+                <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-neutral-600)' }}>
+                  Neutral
+                </span>
+              </div>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 'var(--spacing-1)',
+                opacity: sentimentData.positive > 20 ? 1 : 0.4
+              }}>
+                <FiTrendingUp size={24} color="var(--color-success)" />
+                <span style={{ fontSize: 'var(--font-size-xs)', color: 'var(--color-neutral-600)' }}>
+                  Positive
+                </span>
+              </div>
+            </div>
+
+            {/* Sentiment Bar Graph */}
+            <div style={{
+              display: 'flex',
+              height: '20px',
+              borderRadius: 'var(--radius-md)',
+              overflow: 'hidden',
+              border: '1px solid var(--color-neutral-200)'
+            }}>
+              {sentimentData.negative > 0 && (
+                <div style={{
+                  width: `${sentimentData.negative}%`,
+                  backgroundColor: 'var(--color-error)',
+                  transition: 'width 0.3s ease'
+                }} />
+              )}
+              {sentimentData.neutral > 0 && (
+                <div style={{
+                  width: `${sentimentData.neutral}%`,
+                  backgroundColor: 'var(--color-warning)',
+                  transition: 'width 0.3s ease'
+                }} />
+              )}
+              {sentimentData.positive > 0 && (
+                <div style={{
+                  width: `${sentimentData.positive}%`,
+                  backgroundColor: 'var(--color-success)',
+                  transition: 'width 0.3s ease'
+                }} />
+              )}
+            </div>
+          </div>
+
+          {/* Quick Actions Section */}
+          <div className="card" style={{
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 'var(--spacing-3)',
+            height: 'fit-content'
+          }}>
+            <h2 style={{
+              fontSize: 'var(--font-size-base)',
+              fontWeight: 'var(--font-weight-semibold)',
+              margin: 0,
+              color: 'var(--color-neutral-900)'
+            }}>
+              Quick Actions
+            </h2>
+            <div style={{
+              color: 'var(--color-neutral-400)',
+              fontSize: 'var(--font-size-sm)',
+              fontStyle: 'italic',
+              textAlign: 'center',
+              padding: 'var(--spacing-2)'
+            }}>
+              Actions will appear here
+            </div>
+          </div>
         </div>
 
         {/* Middle Panel - Conversation */}
@@ -417,7 +568,7 @@ function App() {
 
         {/* Right Panel - Sentiment & Suggestions & Post-Call Analysis */}
         <div style={{
-          width: '360px',
+          width: '480px',
           display: 'flex',
           flexDirection: 'column',
           gap: 'var(--spacing-4)',

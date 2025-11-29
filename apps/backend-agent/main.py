@@ -250,7 +250,6 @@ async def audio_websocket(websocket: WebSocket):
                             if deepgram_client:
                                 # Store source before sending to ensure it's available when transcription comes back
                                 await deepgram_client.send_audio(audio_bytes, source=source)
-                                print(f"[Backend-Agent] Sent audio chunk from {source} ({len(audio_bytes)} bytes) to Deepgram")
                             
                         except base64.binascii.Error as e:
                             print(f"[Backend-Agent] Error decoding base64 audio from {source}: {e}")
