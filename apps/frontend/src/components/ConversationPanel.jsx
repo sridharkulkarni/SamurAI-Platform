@@ -43,7 +43,14 @@ export function ConversationPanel({ transcripts = [] }) {
         color: 'var(--color-neutral-400)',
         fontSize: 'var(--font-size-base)'
       }}>
-        <p>No conversation yet. Start recording to see transcriptions.</p>
+        <div style={{ textAlign: 'center' }}>
+          <p style={{ marginBottom: 'var(--spacing-2)', fontWeight: 'var(--font-weight-medium)' }}>
+            No active conversation
+          </p>
+          <p style={{ fontSize: 'var(--font-size-sm)', color: 'var(--color-neutral-500)' }}>
+            Start a call session to view real-time transcriptions
+          </p>
+        </div>
       </div>
     );
   }

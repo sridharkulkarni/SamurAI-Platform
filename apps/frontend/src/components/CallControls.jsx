@@ -22,17 +22,17 @@ export function CallControls({
           aria-label="Start call"
         >
           <FiPlay size={18} />
-          {isLoading ? 'Starting...' : 'Start Recording'}
+          {isLoading ? 'Initializing...' : 'Start Call Session'}
         </button>
       ) : (
         <button
           className="btn btn-danger"
           onClick={onStop}
           disabled={isLoading}
-          aria-label="Stop call"
+          aria-label="End call"
         >
           <FiSquare size={18} />
-          {isLoading ? 'Stopping...' : 'Stop Recording'}
+          {isLoading ? 'Ending Session...' : 'End Call Session'}
         </button>
       )}
     </div>

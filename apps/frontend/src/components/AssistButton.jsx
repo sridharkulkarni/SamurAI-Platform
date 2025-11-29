@@ -11,24 +11,25 @@ export function AssistButton({
 }) {
   return (
     <button
-      className="btn btn-primary"
+      className="btn btn-assist"
       onClick={onClick}
       disabled={disabled || isLoading}
       aria-label="Request compliance assistance"
       style={{
-        minWidth: '160px',
-        position: 'relative'
+        minWidth: '200px',
+        position: 'relative',
+        fontWeight: 'var(--font-weight-medium)'
       }}
     >
       {isLoading ? (
         <>
           <LoadingSpinner size="sm" />
-          <span>Checking...</span>
+          <span>Analyzing...</span>
         </>
       ) : (
         <>
           <FiHelpCircle size={18} />
-          <span>Assist</span>
+          <span>Get Compliance Guidance</span>
         </>
       )}
     </button>

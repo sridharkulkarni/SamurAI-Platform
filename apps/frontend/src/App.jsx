@@ -358,7 +358,8 @@ function App() {
             fontSize: 'var(--font-size-xl)',
             fontWeight: 'var(--font-weight-semibold)',
             color: 'var(--color-neutral-900)',
-            margin: 0
+            margin: 0,
+            letterSpacing: '-0.02em'
           }}>
             SamurAI
           </h1>
@@ -369,9 +370,13 @@ function App() {
             <div style={{
               fontSize: 'var(--font-size-sm)',
               color: 'var(--color-neutral-600)',
-              fontFamily: 'var(--font-family-mono)'
+              fontFamily: 'var(--font-family-mono)',
+              backgroundColor: 'var(--color-neutral-100)',
+              padding: 'var(--spacing-1) var(--spacing-3)',
+              borderRadius: 'var(--radius-md)',
+              fontWeight: 'var(--font-weight-medium)'
             }}>
-              Call: {callId.substring(0, 8)}...
+              Session: {callId.substring(0, 8)}...
             </div>
           )}
         </div>
@@ -417,9 +422,10 @@ function App() {
               fontSize: 'var(--font-size-lg)',
               fontWeight: 'var(--font-weight-semibold)',
               margin: 0,
-              color: 'var(--color-neutral-900)'
+              color: 'var(--color-neutral-900)',
+              letterSpacing: '-0.01em'
             }}>
-              Call Controls
+              Session Controls
             </h2>
             <CallControls
               isActive={isCallActive}
@@ -445,9 +451,10 @@ function App() {
               fontSize: 'var(--font-size-base)',
               fontWeight: 'var(--font-weight-semibold)',
               margin: 0,
-              color: 'var(--color-neutral-900)'
+              color: 'var(--color-neutral-900)',
+              letterSpacing: '-0.01em'
             }}>
-              Customer Sentiment
+              Sentiment Analysis
             </h2>
             
             {/* Sentiment Icons */}
@@ -537,18 +544,19 @@ function App() {
               fontSize: 'var(--font-size-base)',
               fontWeight: 'var(--font-weight-semibold)',
               margin: 0,
-              color: 'var(--color-neutral-900)'
+              color: 'var(--color-neutral-900)',
+              letterSpacing: '-0.01em'
             }}>
-              Quick Actions
+              Call Insights
             </h2>
             <div style={{
-              color: 'var(--color-neutral-400)',
+              color: 'var(--color-neutral-500)',
               fontSize: 'var(--font-size-sm)',
-              fontStyle: 'italic',
               textAlign: 'center',
-              padding: 'var(--spacing-2)'
+              padding: 'var(--spacing-4)',
+              lineHeight: 'var(--line-height-relaxed)'
             }}>
-              Actions will appear here
+              Real-time insights and analytics will appear here during active calls
             </div>
           </div>
         </div>
@@ -573,9 +581,10 @@ function App() {
               fontSize: 'var(--font-size-xl)',
               fontWeight: 'var(--font-weight-semibold)',
               margin: 0,
-              color: 'var(--color-neutral-900)'
+              color: 'var(--color-neutral-900)',
+              letterSpacing: '-0.02em'
             }}>
-              Conversation
+              Live Transcript
             </h2>
           </div>
           <div style={{ flex: 1, overflow: 'hidden' }}>

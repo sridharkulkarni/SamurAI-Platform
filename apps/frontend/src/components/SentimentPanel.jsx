@@ -37,9 +37,10 @@ export function SentimentPanel({ transcripts = [], suggestions = [], postCallDat
             fontSize: 'var(--font-size-xl)',
             fontWeight: 'var(--font-weight-semibold)',
             color: 'var(--color-neutral-900)',
-            margin: 0
+            margin: 0,
+            letterSpacing: '-0.02em'
           }}>
-            AI Suggestion
+            Compliance Guidance
           </h3>
         </div>
 
@@ -180,15 +181,39 @@ export function SentimentPanel({ transcripts = [], suggestions = [], postCallDat
           </div>
             ) : (
               <div style={{
-                color: 'var(--color-neutral-400)',
+                color: 'var(--color-neutral-500)',
                 fontSize: 'var(--font-size-sm)',
-                fontStyle: 'italic',
                 textAlign: 'center',
-                padding: 'var(--spacing-4)'
+                padding: 'var(--spacing-6)',
+                lineHeight: 'var(--line-height-relaxed)'
               }}>
-                {rawLLMResponse !== null 
-                  ? 'No compliance issues detected. LLM returned empty response.' 
-                  : 'No suggestions yet. AI will provide recommendations based on the conversation.'}
+                {rawLLMResponse !== null ? (
+                  <div>
+                    <div style={{ 
+                      fontWeight: 'var(--font-weight-medium)', 
+                      marginBottom: 'var(--spacing-2)',
+                      color: 'var(--color-success)'
+                    }}>
+                      ✓ No Compliance Issues Detected
+                    </div>
+                    <div style={{ color: 'var(--color-neutral-500)' }}>
+                      The conversation appears to be compliant with regulatory requirements.
+                    </div>
+                  </div>
+                ) : (
+                  <div>
+                    <div style={{ 
+                      fontWeight: 'var(--font-weight-medium)', 
+                      marginBottom: 'var(--spacing-2)',
+                      color: 'var(--color-neutral-600)'
+                    }}>
+                      Awaiting Analysis
+                    </div>
+                    <div style={{ color: 'var(--color-neutral-500)' }}>
+                      Click "Get Compliance Guidance" to receive AI-powered recommendations based on the conversation.
+                    </div>
+                  </div>
+                )}
               </div>
             )}
       </div>
@@ -216,9 +241,10 @@ export function SentimentPanel({ transcripts = [], suggestions = [], postCallDat
               fontSize: 'var(--font-size-base)',
               fontWeight: 'var(--font-weight-semibold)',
               color: 'var(--color-neutral-900)',
-              margin: 0
+              margin: 0,
+              letterSpacing: '-0.01em'
             }}>
-              Post-Call Analysis
+              Post-Call Report
             </h3>
           </div>
 
@@ -286,7 +312,7 @@ export function SentimentPanel({ transcripts = [], suggestions = [], postCallDat
                 marginBottom: 'var(--spacing-2)',
                 color: 'var(--color-neutral-700)'
               }}>
-                Recommendations:
+                Detailed Recommendations:
               </div>
               <div style={{
                 display: 'flex',
