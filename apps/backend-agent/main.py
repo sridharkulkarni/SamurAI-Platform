@@ -55,6 +55,7 @@ init_database()
 # Global state
 active_calls: Dict[str, Dict[str, Any]] = {}  # call_id -> {deepgram_client, backend_ws, transcripts}
 backend_connections: Dict[str, WebSocket] = {}  # call_id -> backend WebSocket
+audio_connections: Dict[str, WebSocket] = {}  # call_id -> audio WebSocket (for sending transcriptions back)
 compliance_checker = ComplianceChecker()
 
 
@@ -116,6 +117,14 @@ async def on_transcription(call_id: str, text: str, is_final: bool, speaker: Opt
         }
     }
     await send_to_backend(call_id, message)
+    
+    # Also send transcription back to audio WebSocket client
+    if call_id in audio_connections:
+        try:
+            ws = audio_connections[call_id]
+            await ws.send_text(json.dumps(message))
+        except Exception as e:
+            print(f"[Backend-Agent] Error sending transcription to audio client: {e}")
 
 
 @app.websocket("/audio")
@@ -140,7 +149,14 @@ async def audio_websocket(websocket: WebSocket):
                 if 'callId' in message_data:
                     new_call_id = message_data.get('callId') or str(uuid.uuid4())
                     if not call_id or call_id != new_call_id:
+                        # Clean up old call_id connection if changing
+                        if call_id and call_id in audio_connections:
+                            del audio_connections[call_id]
+                        
                         call_id = new_call_id
+                        # Store audio WebSocket connection for this call
+                        audio_connections[call_id] = websocket
+                        
                         # Initialize call
                         create_call(call_id)
                         active_calls[call_id] = {
@@ -172,10 +188,14 @@ async def audio_websocket(websocket: WebSocket):
                         continue
                 
                 # Handle audio message format: { "source": "agent"|"customer", "audio": "base64...", "mime": "..." }
+                # Note: source is ALWAYS "agent" for microphone input, "customer" for tab/speaker audio
                 if 'audio' in message_data and 'source' in message_data:
                     if not call_id:
                         # Generate call_id if not set yet
                         call_id = str(uuid.uuid4())
+                        # Store audio WebSocket connection for this call
+                        audio_connections[call_id] = websocket
+                        
                         create_call(call_id)
                         active_calls[call_id] = {
                             'transcripts': [],
@@ -191,9 +211,14 @@ async def audio_websocket(websocket: WebSocket):
                         active_calls[call_id]['deepgram_client'] = deepgram_client
                         active_calls[call_id]['current_source'] = current_source
                     
-                    source = message_data.get('source', 'unknown')  # "agent" or "customer"
+                    source = message_data.get('source', 'unknown')  # "agent" (mic) or "customer" (tab/speaker)
                     audio_base64 = message_data.get('audio', '')
                     mime_type = message_data.get('mime', 'audio/pcm')
+                    
+                    # Validate source
+                    if source not in ['agent', 'customer']:
+                        print(f"[Backend-Agent] Warning: Invalid source '{source}', expected 'agent' or 'customer'")
+                        source = 'unknown'
                     
                     # Update current source for this call (used in transcription callback)
                     current_source['value'] = source
@@ -204,13 +229,18 @@ async def audio_websocket(websocket: WebSocket):
                             audio_bytes = base64.b64decode(audio_base64)
                             
                             # Send decoded audio to Deepgram with source info
+                            # Note: mic = agent, tab/speaker = customer
                             if deepgram_client:
+                                # Store source before sending to ensure it's available when transcription comes back
                                 await deepgram_client.send_audio(audio_bytes, source=source)
+                                print(f"[Backend-Agent] Sent audio chunk from {source} ({len(audio_bytes)} bytes) to Deepgram")
                             
                         except base64.binascii.Error as e:
-                            print(f"[Backend-Agent] Error decoding base64 audio: {e}")
+                            print(f"[Backend-Agent] Error decoding base64 audio from {source}: {e}")
                         except Exception as e:
                             print(f"[Backend-Agent] Error processing audio from {source}: {e}")
+                            import traceback
+                            traceback.print_exc()
                     else:
                         print(f"[Backend-Agent] Received empty audio data from {source}")
                         
@@ -225,6 +255,9 @@ async def audio_websocket(websocket: WebSocket):
         print(f"[Backend-Agent] Error in audio WebSocket: {e}")
     finally:
         # Cleanup
+        if call_id and call_id in audio_connections:
+            del audio_connections[call_id]
+        
         if call_id and call_id in active_calls:
             if 'deepgram_client' in active_calls[call_id]:
                 await active_calls[call_id]['deepgram_client'].stop_stream()

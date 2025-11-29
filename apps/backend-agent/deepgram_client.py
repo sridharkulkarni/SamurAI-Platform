@@ -26,6 +26,7 @@ class DeepgramStreamingClient:
         self.call_id = None
         self.task = None
         self.current_source = None  # Track current source (agent/customer)
+        self.pending_audio_sources = []  # Track sources for audio chunks in flight
 
     async def start_stream(self, call_id: str):
         """Start Deepgram streaming connection using WebSocket"""
@@ -69,9 +70,16 @@ class DeepgramStreamingClient:
                             
                             # LOG: Print only transcript
                             if transcript:
-                                print(f"[Deepgram] Transcript: '{transcript}' | is_final: {is_final} | source: {self.current_source}")
-                                # Pass current source if available
-                                await self.on_transcription_callback(transcript, is_final, speaker=None, source=self.current_source)
+                                # Use the most recent source (Deepgram processes audio in order)
+                                # Note: source is "agent" for mic input, "customer" for tab/speaker audio
+                                source_to_use = self.current_source
+                                if self.pending_audio_sources:
+                                    # Use the first pending source (FIFO) - this matches the audio chunk order
+                                    source_to_use = self.pending_audio_sources.pop(0)
+                                
+                                print(f"[Deepgram] Transcript: '{transcript}' | is_final: {is_final} | source: {source_to_use}")
+                                # Pass source to callback (agent = mic, customer = tab/speaker)
+                                await self.on_transcription_callback(transcript, is_final, speaker=None, source=source_to_use)
                     
                     # Handle errors
                     if 'error' in data:
@@ -96,12 +104,18 @@ class DeepgramStreamingClient:
         """Send audio chunk to Deepgram"""
         if self.websocket:
             try:
-                # Store source for transcription callback
+                # Store source for this audio chunk
                 if source:
                     self.current_source = source
+                    # Also track it in pending list (though Deepgram processes in order)
+                    self.pending_audio_sources.append(source)
+                    # Keep only last 10 to avoid memory issues
+                    if len(self.pending_audio_sources) > 10:
+                        self.pending_audio_sources.pop(0)
+                
                 await self.websocket.send(audio_data)
             except Exception as e:
-                print(f"[Deepgram] Error sending audio: {e}")
+                print(f"[Deepgram] Error sending audio from {source}: {e}")
 
     async def stop_stream(self):
         """Stop Deepgram streaming connection"""

@@ -2,6 +2,7 @@
 
 import { useState, useCallback } from 'react';
 import { useSSE } from './hooks/useSSE';
+import { useAudioStream } from './hooks/useAudioStream';
 import { api } from './services/api';
 import { CallControls } from './components/CallControls';
 import { AssistButton } from './components/AssistButton';
@@ -26,6 +27,34 @@ function App() {
   const [error, setError] = useState(null);
   const [showPostCall, setShowPostCall] = useState(false);
   const [postCallData, setPostCallData] = useState(null);
+
+  // Handle transcriptions from audio stream
+  const handleTranscription = useCallback((transcript) => {
+    setTranscripts(prev => {
+      const isFinal = transcript.isFinal !== undefined ? transcript.isFinal : true;
+      const newTranscript = {
+        text: transcript.text,
+        timestamp: transcript.timestamp || new Date().toISOString(),
+        speaker: transcript.speaker || 'unknown',
+        isFinal: isFinal
+      };
+
+      // If it's an interim transcript, update the last one if it's also interim
+      if (!isFinal && prev.length > 0) {
+        const lastTranscript = prev[prev.length - 1];
+        // Only update if last one is also interim and from same speaker
+        if (!lastTranscript.isFinal && lastTranscript.speaker === newTranscript.speaker) {
+          return [...prev.slice(0, -1), newTranscript];
+        }
+      }
+
+      // Otherwise, append as new transcript
+      return [...prev, newTranscript];
+    });
+  }, []);
+
+  // Audio stream hook
+  const { startRecording, stopRecording } = useAudioStream(handleTranscription);
 
   // SSE message handler
   const handleSSEMessage = useCallback((eventType, data) => {
@@ -102,39 +131,70 @@ function App() {
     }
   }, [transcripts]);
 
-  // SSE connection
+  // SSE connection (for compliance suggestions from backend)
+  // Only connect if we have a callId and want to receive suggestions via backend
   const { connectionStatus, error: sseError } = useSSE(
     `${API_URL}/api/stream`,
-    callId,
+    callId, // This will be set when recording starts
     handleSSEMessage
   );
+  
+  // Log SSE errors (less critical since we're using WebSocket for audio)
+  if (sseError) {
+    console.warn('[App] SSE connection error:', sseError);
+  }
 
-  // Start call
+  // Start call - using audio stream
   const handleStartCall = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      const response = await api.startCall();
-      setCallId(response.callId);
+      
+      // Start audio recording (captures tab + mic, streams to backend-agent)
+      const newCallId = await startRecording();
+      
+      setCallId(newCallId);
       setIsCallActive(true);
       setShowPostCall(false);
       setTranscripts([]);
       setSuggestions([]);
-    } catch (err) {
-      setError(err.message || 'Failed to start call');
       setIsLoading(false);
+    } catch (err) {
+      setError(err.message || 'Failed to start recording. Make sure to allow microphone and screen sharing permissions.');
+      setIsLoading(false);
+      console.error('[App] Error starting recording:', err);
     }
   };
 
-  // Stop call
+  // Stop call - using audio stream
   const handleStopCall = async () => {
     try {
       setIsLoading(true);
       setError(null);
-      await api.stopCall(callId);
+      
+      // Stop audio recording
+      const stoppedCallId = stopRecording();
+      
       setIsCallActive(false);
+      
+      // Optionally fetch post-call summary
+      if (stoppedCallId) {
+        try {
+          const summary = await api.getPostCallSummary(stoppedCallId);
+          setPostCallData({
+            callId: stoppedCallId,
+            transcripts: transcripts,
+            complianceReport: summary
+          });
+          setShowPostCall(true);
+        } catch (err) {
+          console.error('[App] Error fetching post-call summary:', err);
+        }
+      }
+      
+      setIsLoading(false);
     } catch (err) {
-      setError(err.message || 'Failed to stop call');
+      setError(err.message || 'Failed to stop recording');
       setIsLoading(false);
     }
   };
