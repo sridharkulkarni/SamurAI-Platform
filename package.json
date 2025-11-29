@@ -6,7 +6,8 @@
   "scripts": {
     "dev:backend": "cd apps/backend && npm run dev",
     "dev:frontend": "cd apps/frontend && pnpm dev",
-    "dev:backend-agent": "cd apps/backend-agent && uvicorn main:app --reload --port 8000"
+    "dev:backend-agent": "cd apps/backend-agent && uvicorn main:app --reload --port 8000",
+    "dev:samurai": "cd apps/samurai && npm run dev"
   },
   "keywords": [
     "compliance",

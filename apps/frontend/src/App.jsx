@@ -11,7 +11,7 @@ import { SentimentPanel } from './components/SentimentPanel';
 import { ComplianceSuggestions } from './components/ComplianceSuggestions';
 import { StatusIndicator } from './components/StatusIndicator';
 import { ErrorAlert } from './components/ErrorAlert';
-import { FiTrendingUp, FiTrendingDown, FiMinus } from 'react-icons/fi';
+import { FiTrendingUp, FiTrendingDown, FiMinus, FiBarChart2 } from 'react-icons/fi';
 import { useMemo } from 'react';
 import logoImage from './assets/gg1.png';
 import './styles/globals.css';
@@ -365,6 +365,39 @@ function App() {
           </h1>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-4)' }}>
+          <a
+            href="http://localhost:5000"
+            target="_blank"
+            rel="noopener noreferrer"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 'var(--spacing-2)',
+              padding: 'var(--spacing-2) var(--spacing-4)',
+              fontSize: 'var(--font-size-sm)',
+              fontWeight: 'var(--font-weight-medium)',
+              color: 'var(--color-white)',
+              backgroundColor: 'var(--color-primary)',
+              borderRadius: 'var(--radius-md)',
+              textDecoration: 'none',
+              transition: 'all var(--transition-base)',
+              boxShadow: 'var(--shadow-sm)',
+              cursor: 'pointer'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--color-primary-dark)';
+              e.currentTarget.style.boxShadow = 'var(--shadow-md)';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = 'var(--color-primary)';
+              e.currentTarget.style.boxShadow = 'var(--shadow-sm)';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+          >
+            <FiBarChart2 size={16} />
+            Post Call Analysis
+          </a>
           <StatusIndicator status={connectionStatus} />
           {callId && (
             <div style={{
