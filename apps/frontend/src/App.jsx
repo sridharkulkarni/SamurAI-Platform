@@ -11,8 +11,9 @@ import { SentimentPanel } from './components/SentimentPanel';
 import { ComplianceSuggestions } from './components/ComplianceSuggestions';
 import { StatusIndicator } from './components/StatusIndicator';
 import { ErrorAlert } from './components/ErrorAlert';
-import { FiActivity, FiTrendingUp, FiTrendingDown, FiMinus } from 'react-icons/fi';
+import { FiTrendingUp, FiTrendingDown, FiMinus } from 'react-icons/fi';
 import { useMemo } from 'react';
+import logoImage from './assets/gg1.png';
 import './styles/globals.css';
 import './styles/components.css';
 import './App.css';
@@ -344,14 +345,22 @@ function App() {
         zIndex: 10
       }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-3)' }}>
-          <FiActivity size={24} style={{ color: 'var(--color-primary)' }} />
+          <img 
+            src={logoImage} 
+            alt="Logo" 
+            style={{ 
+              height: '48px', 
+              width: 'auto',
+              objectFit: 'contain'
+            }} 
+          />
           <h1 style={{
             fontSize: 'var(--font-size-xl)',
             fontWeight: 'var(--font-weight-semibold)',
             color: 'var(--color-neutral-900)',
             margin: 0
           }}>
-                  SamurAI
+            SamurAI
           </h1>
         </div>
         <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--spacing-4)' }}>
