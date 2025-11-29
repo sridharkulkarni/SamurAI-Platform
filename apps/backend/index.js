@@ -29,7 +29,12 @@ const backendAgentClient = new BackendAgentClient(BACKEND_AGENT_WS_URL);
 // Handle messages from backend-agent
 backendAgentClient.on('message', (message) => {
   const callId = message.callId;
-  const type = message.type;
+  let type = message.type;
+
+  // Map assist_response to compliance_suggestion for frontend
+  if (type === 'assist_response') {
+    type = 'compliance_suggestion';
+  }
 
   // Forward to all SSE clients for this call
   if (callId && sseClients.has(callId)) {

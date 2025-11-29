@@ -27,17 +27,17 @@ class ComplianceChecker:
         call_id: str
     ) -> List[ComplianceSuggestion]:
         """
-        Check compliance for transcript segments
+        Check compliance for full conversation transcript
         
         Args:
-            transcript_segments: List of transcript segments (last 30-40 seconds)
+            transcript_segments: List of all transcript segments (full conversation)
             call_id: Call ID for context
             
         Returns:
             List of compliance suggestions
         """
-        # Extract last 30-40 seconds of transcript
-        transcript_text = self._extract_recent_transcript(transcript_segments)
+        # Format full conversation transcript with speaker labels
+        transcript_text = self._format_full_transcript(transcript_segments)
 
         if not transcript_text:
             return [ComplianceSuggestion(
@@ -59,40 +59,34 @@ class ComplianceChecker:
 
         return suggestions
 
-    def _extract_recent_transcript(
+    def _format_full_transcript(
         self,
-        transcript_segments: List[Dict[str, Any]],
-        max_seconds: int = 40
+        transcript_segments: List[Dict[str, Any]]
     ) -> str:
         """
-        Extract last N seconds of transcript
+        Format full conversation transcript with speaker labels
         
         Args:
-            transcript_segments: List of transcript segments
-            max_seconds: Maximum seconds to extract (default 40)
+            transcript_segments: List of all transcript segments
             
         Returns:
-            Combined transcript text
+            Formatted transcript text with speaker labels
         """
         if not transcript_segments:
             return ""
 
-        # Get current time
-        now = datetime.utcnow()
+        # Format each segment with speaker label
+        formatted_segments = []
+        for segment in transcript_segments:
+            speaker = segment.get('speaker', 'unknown')
+            text = segment.get('text', '').strip()
+            if text:
+                # Format as "Agent: ..." or "Customer: ..."
+                speaker_label = "Agent" if speaker == "agent" else "Customer" if speaker == "customer" else "Unknown"
+                formatted_segments.append(f"{speaker_label}: {text}")
 
-        # Filter segments within last N seconds
-        recent_segments = []
-        for segment in reversed(transcript_segments):
-            segment_time = datetime.fromisoformat(segment.get('timestamp', now.isoformat()))
-            time_diff = (now - segment_time).total_seconds()
-
-            if time_diff <= max_seconds:
-                recent_segments.insert(0, segment)
-            else:
-                break
-
-        # Combine text
-        transcript_text = " ".join([seg.get('text', '') for seg in recent_segments])
+        # Combine with line breaks for readability
+        transcript_text = "\n".join(formatted_segments)
         return transcript_text.strip()
 
     async def generate_post_call_report(

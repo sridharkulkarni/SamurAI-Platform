@@ -325,22 +325,43 @@ async def backend_websocket(websocket: WebSocket):
                 else:
                     transcript_segments = []
 
-                # Check compliance
-                suggestions = await compliance_checker.check_compliance(
-                    transcript_segments,
-                    call_id
-                )
+                print(f"[Backend-Agent] Assist request received for call {call_id}, transcript segments: {len(transcript_segments)}")
 
-                # Send response
-                response = {
-                    'type': 'assist_response',
-                    'callId': call_id,
-                    'timestamp': int(datetime.utcnow().timestamp() * 1000),
-                    'data': {
-                        'suggestions': [s.dict() for s in suggestions]
+                try:
+                    # Check compliance
+                    suggestions = await compliance_checker.check_compliance(
+                        transcript_segments,
+                        call_id
+                    )
+
+                    print(f"[Backend-Agent] Compliance check completed, suggestions: {len(suggestions)}")
+
+                    # Send response (even if empty - frontend will handle it)
+                    response = {
+                        'type': 'assist_response',
+                        'callId': call_id,
+                        'timestamp': int(datetime.utcnow().timestamp() * 1000),
+                        'data': {
+                            'suggestions': [s.dict() for s in suggestions]
+                        }
                     }
-                }
-                await send_to_backend(call_id, response)
+                    await send_to_backend(call_id, response)
+                    print(f"[Backend-Agent] Assist response sent to backend")
+                except Exception as e:
+                    print(f"[Backend-Agent] Error during compliance check: {e}")
+                    import traceback
+                    traceback.print_exc()
+                    # Send error response
+                    error_response = {
+                        'type': 'assist_response',
+                        'callId': call_id,
+                        'timestamp': int(datetime.utcnow().timestamp() * 1000),
+                        'data': {
+                            'suggestions': [],
+                            'error': str(e)
+                        }
+                    }
+                    await send_to_backend(call_id, error_response)
 
             elif message_type == 'call_start':
                 # Initialize call if not exists

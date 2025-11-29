@@ -85,8 +85,18 @@ function App() {
         break;
 
       case 'compliance_suggestion':
+        console.log('[App] Compliance suggestions received:', data);
+        // Clear timeout if it exists
+        if (window.assistTimeoutId) {
+          clearTimeout(window.assistTimeoutId);
+          window.assistTimeoutId = null;
+        }
         setSuggestions(data.suggestions || []);
         setIsLoading(false);
+        // If no suggestions, show a message
+        if (!data.suggestions || data.suggestions.length === 0) {
+          console.log('[App] No compliance issues detected');
+        }
         break;
 
       case 'error':
@@ -204,17 +214,36 @@ function App() {
       return;
     }
 
+    if (transcripts.length === 0) {
+      setError('No conversation transcript available yet');
+      setIsLoading(false);
+      return;
+    }
+
     try {
       setIsLoading(true);
       setError(null);
       setSuggestions([]);
       
-      // Get last 30-40 seconds of transcript (optional, backend-agent will extract if not provided)
-      const recentTranscripts = transcripts.slice(-10).map(t => t.text).join(' ');
+      // Set a timeout to clear loading state if no response comes
+      const timeoutId = setTimeout(() => {
+        console.warn('[App] Assist request timeout - no response received');
+        setIsLoading(false);
+        setError('Request timed out. Please try again.');
+      }, 30000); // 30 second timeout
       
-      await api.requestAssist(callId, recentTranscripts);
-      // Suggestions will come via SSE
+      // Store timeout ID to clear it when response arrives
+      window.assistTimeoutId = timeoutId;
+      
+      // Send full conversation transcript (backend-agent will format it)
+      // The transcript is already stored in backend-agent, so we just need to trigger the check
+      await api.requestAssist(callId, '');
+      // Suggestions will come via SSE (loading will be cleared in handleSSEMessage)
     } catch (err) {
+      if (window.assistTimeoutId) {
+        clearTimeout(window.assistTimeoutId);
+        window.assistTimeoutId = null;
+      }
       setError(err.message || 'Failed to request assistance');
       setIsLoading(false);
     }

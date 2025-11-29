@@ -24,12 +24,16 @@ class Transcript(BaseModel):
 
 
 class ComplianceSuggestion(BaseModel):
-    type: Literal['warning', 'error', 'info', 'success']
+    type: Literal['warning', 'error', 'info', 'success'] = 'info'
     message: str
     severity: Literal['low', 'medium', 'high'] = 'medium'
     timestamp: str
     rule_id: Optional[str] = None
     recommendation: Optional[str] = None
+    # New fields for life-insurance compliance format
+    alert: Optional[str] = None  # Short violation/warning
+    information: Optional[str] = None  # Compliant phrase agent can say
+    insight: Optional[str] = None  # Extra disclosure or info customer should know
 
 
 class ComplianceReport(BaseModel):

@@ -169,42 +169,120 @@ export function SentimentPanel({ transcripts = [], suggestions = [], postCallDat
             flexDirection: 'column',
             gap: 'var(--spacing-4)'
           }}>
-            {suggestions.map((suggestion, index) => (
-              <div
-                key={index}
-                style={{
-                  backgroundColor: '#f3e8ff',
-                  border: '1px solid #c084fc',
-                  borderRadius: 'var(--radius-md)',
-                  padding: 'var(--spacing-4)',
-                  fontSize: 'var(--font-size-sm)',
-                  lineHeight: 'var(--line-height-relaxed)',
-                  color: 'var(--color-neutral-900)'
-                }}
-              >
-                <div style={{
-                  fontWeight: 'var(--font-weight-semibold)',
-                  marginBottom: 'var(--spacing-2)',
-                  color: '#9333ea'
-                }}>
-                  {suggestion.type || 'Suggestion'}
+            {suggestions.map((suggestion, index) => {
+              // Support new format: alert, information, insight
+              const alert = suggestion.alert || (suggestion.message?.includes('⚠️') ? suggestion.message.split('⚠️')[1]?.split('|')[0]?.trim() : null);
+              const information = suggestion.information || suggestion.recommendation || (suggestion.message?.includes('💡') ? suggestion.message.split('💡')[1]?.split('|')[0]?.trim() : null);
+              const insight = suggestion.insight || (suggestion.message?.includes('ℹ️') ? suggestion.message.split('ℹ️')[1]?.trim() : null);
+              
+              // If message contains the formatted string, parse it
+              let parsedAlert = alert;
+              let parsedInformation = information;
+              let parsedInsight = insight;
+              
+              if (suggestion.message && suggestion.message.includes('|')) {
+                const parts = suggestion.message.split('|');
+                parts.forEach(part => {
+                  if (part.includes('⚠️')) parsedAlert = part.replace('⚠️', '').trim();
+                  if (part.includes('💡')) parsedInformation = part.replace('💡', '').trim();
+                  if (part.includes('ℹ️')) parsedInsight = part.replace('ℹ️', '').trim();
+                });
+              }
+              
+              return (
+                <div
+                  key={index}
+                  style={{
+                    backgroundColor: parsedAlert ? '#fef2f2' : '#f3e8ff',
+                    border: `1px solid ${parsedAlert ? '#ef4444' : '#c084fc'}`,
+                    borderRadius: 'var(--radius-md)',
+                    padding: 'var(--spacing-4)',
+                    fontSize: 'var(--font-size-sm)',
+                    lineHeight: 'var(--line-height-relaxed)',
+                    color: 'var(--color-neutral-900)'
+                  }}
+                >
+                  {parsedAlert && (
+                    <div style={{
+                      marginBottom: 'var(--spacing-3)',
+                      padding: 'var(--spacing-2)',
+                      backgroundColor: '#fee2e2',
+                      borderRadius: 'var(--radius-sm)',
+                      borderLeft: '3px solid #ef4444'
+                    }}>
+                      <div style={{
+                        fontWeight: 'var(--font-weight-semibold)',
+                        color: '#dc2626',
+                        marginBottom: 'var(--spacing-1)',
+                        fontSize: 'var(--font-size-xs)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px'
+                      }}>
+                        ⚠️ Alert
+                      </div>
+                      <div style={{ color: '#991b1b' }}>
+                        {parsedAlert}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {parsedInformation && (
+                    <div style={{
+                      marginBottom: parsedInsight ? 'var(--spacing-3)' : 0,
+                      padding: 'var(--spacing-2)',
+                      backgroundColor: '#f0f9ff',
+                      borderRadius: 'var(--radius-sm)',
+                      borderLeft: '3px solid #3b82f6'
+                    }}>
+                      <div style={{
+                        fontWeight: 'var(--font-weight-semibold)',
+                        color: '#1e40af',
+                        marginBottom: 'var(--spacing-1)',
+                        fontSize: 'var(--font-size-xs)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px'
+                      }}>
+                        💡 Suggestion
+                      </div>
+                      <div style={{ color: '#1e3a8a' }}>
+                        {parsedInformation}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {parsedInsight && (
+                    <div style={{
+                      marginTop: 'var(--spacing-3)',
+                      padding: 'var(--spacing-2)',
+                      backgroundColor: '#f9fafb',
+                      borderRadius: 'var(--radius-sm)',
+                      borderLeft: '3px solid #6b7280'
+                    }}>
+                      <div style={{
+                        fontWeight: 'var(--font-weight-semibold)',
+                        color: '#374151',
+                        marginBottom: 'var(--spacing-1)',
+                        fontSize: 'var(--font-size-xs)',
+                        textTransform: 'uppercase',
+                        letterSpacing: '0.5px'
+                      }}>
+                        ℹ️ Insight
+                      </div>
+                      <div style={{ color: '#4b5563' }}>
+                        {parsedInsight}
+                      </div>
+                    </div>
+                  )}
+                  
+                  {/* Fallback: if no structured fields, show message */}
+                  {!parsedAlert && !parsedInformation && !parsedInsight && (
+                    <div>
+                      {suggestion.message || suggestion.text || JSON.stringify(suggestion)}
+                    </div>
+                  )}
                 </div>
-                <div style={{ marginBottom: 'var(--spacing-2)' }}>
-                  {suggestion.message || suggestion.text}
-                </div>
-                {suggestion.recommendation && (
-                  <div style={{
-                    marginTop: 'var(--spacing-2)',
-                    paddingTop: 'var(--spacing-2)',
-                    borderTop: '1px solid #c084fc',
-                    fontSize: 'var(--font-size-xs)',
-                    color: 'var(--color-neutral-700)'
-                  }}>
-                    {suggestion.recommendation}
-                  </div>
-                )}
-              </div>
-            ))}
+              );
+            })}
           </div>
         ) : (
           <div style={{
