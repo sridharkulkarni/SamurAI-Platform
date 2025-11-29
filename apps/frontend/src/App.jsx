@@ -24,6 +24,8 @@ function App() {
   const [isCallActive, setIsCallActive] = useState(false);
   const [transcripts, setTranscripts] = useState([]);
   const [suggestions, setSuggestions] = useState([]);
+  const [rawLLMResponse, setRawLLMResponse] = useState(null);
+  const [kbContext, setKbContext] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState(null);
   const [postCallData, setPostCallData] = useState(null);
@@ -119,12 +121,17 @@ function App() {
 
       case 'compliance_suggestion':
         console.log('[App] Compliance suggestions received:', data);
+        console.log('[App] Raw LLM response in data:', data.raw_llm_response);
         // Clear timeout if it exists
         if (window.assistTimeoutId) {
           clearTimeout(window.assistTimeoutId);
           window.assistTimeoutId = null;
         }
         setSuggestions(data.suggestions || []);
+        setRawLLMResponse(data.raw_llm_response || null);
+        setKbContext(data.kb_context || null);
+        console.log('[App] Set rawLLMResponse to:', data.raw_llm_response || null);
+        console.log('[App] Set kbContext to:', data.kb_context ? `${data.kb_context.length} characters` : null);
         setIsLoading(false);
         // If no suggestions, show a message
         if (!data.suggestions || data.suggestions.length === 0) {
@@ -257,6 +264,7 @@ function App() {
       setIsLoading(true);
       setError(null);
       setSuggestions([]);
+      setRawLLMResponse(null); // Clear previous raw response
       
       // Set a timeout to clear loading state if no response comes
       const timeoutId = setTimeout(() => {
@@ -579,6 +587,8 @@ function App() {
             transcripts={transcripts} 
             suggestions={suggestions}
             postCallData={postCallData}
+            rawLLMResponse={rawLLMResponse}
+            kbContext={kbContext}
           />
         </div>
       </main>

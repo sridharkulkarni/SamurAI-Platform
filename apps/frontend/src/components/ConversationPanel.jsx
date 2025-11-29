@@ -10,15 +10,11 @@ export function ConversationPanel({ transcripts = [] }) {
   useEffect(() => {
     if (containerRef.current) {
       const container = containerRef.current;
-      const isNearBottom = 
-        container.scrollHeight - container.scrollTop - container.clientHeight < 100;
-      
-      if (isNearBottom) {
-        container.scrollTo({
-          top: container.scrollHeight,
-          behavior: 'smooth'
-        });
-      }
+      // Always scroll to bottom when new transcripts arrive
+      container.scrollTo({
+        top: container.scrollHeight,
+        behavior: 'smooth'
+      });
     }
   }, [transcripts]);
 

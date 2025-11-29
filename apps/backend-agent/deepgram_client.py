@@ -77,7 +77,6 @@ class DeepgramStreamingClient:
                                     # Use the first pending source (FIFO) - this matches the audio chunk order
                                     source_to_use = self.pending_audio_sources.pop(0)
                                 
-                                print(f"[Deepgram] Transcript: '{transcript}' | is_final: {is_final} | source: {source_to_use}")
                                 # Pass source to callback (agent = mic, customer = tab/speaker)
                                 await self.on_transcription_callback(transcript, is_final, speaker=None, source=source_to_use)
                     

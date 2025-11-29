@@ -2,7 +2,7 @@
 
 import sys
 import os
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple
 from openai import OpenAI
 from dotenv import load_dotenv
 from datetime import datetime
@@ -30,7 +30,7 @@ class OpenAIClient:
         transcript: str,
         kb_context: str,
         model: str = "gpt-3.5-turbo"
-    ) -> List[ComplianceSuggestion]:
+    ) -> Tuple[List[ComplianceSuggestion], str]:
         """
         Check compliance using OpenAI with knowledge base context
         
@@ -40,38 +40,34 @@ class OpenAIClient:
             model: OpenAI model to use
             
         Returns:
-            List of compliance suggestions
+            Tuple of (list of compliance suggestions, raw LLM response)
         """
         # Build prompt
         prompt = self._build_prompt(transcript, kb_context)
+        
+        print(f"[OpenAI] Transcript length: {len(transcript)} characters")
+        print(f"[OpenAI] KB context length: {len(kb_context)} characters")
+        print(f"[OpenAI] Full prompt length: {len(prompt)} characters")
+        print(f"[OpenAI] Transcript preview: {transcript[:300]}...")
 
         try:
             # Call OpenAI API
             # Note: For JSON mode, we need to ensure the prompt explicitly asks for JSON
-            system_prompt = """You are a smart real-time Compliance & Sales-Support Co-pilot for life-insurance sales calls in India.  
-You monitor the live conversation between the agent and the customer.  
-You have access to: (a) IRDAI compliance rule-book + product metadata, (b) the policy's product details.
+            system_prompt = """You are a Compliance & Sales-Support Co-pilot for life-insurance sales calls in India.
 
-Your objective:  
-- Detect when a mandatory disclosure/rule might be ignored or misrepresented → give an alert or nudge.  
-- Suggest clear, compliant phrases for the agent to use to help complete the sale without breaking compliance.  
-- When no risk is detected, return an empty JSON object {}.
+Your role:
+- Analyze conversations for compliance violations based on the IRDAI compliance rules provided from the Vertex AI Knowledge Base
+- The Vertex AI Knowledge Base is your SINGLE SOURCE OF TRUTH for all compliance requirements
+- Flag only actual violations happening in the current conversation
+- Provide helpful suggestions to keep the conversation compliant
 
-On a compliance issue, output in this exact JSON format (no markdown, no code blocks):
-
+Output format (JSON only, no markdown):
 { "Alert": "<short violation/warning>",  
   "Information/Suggestion": "<very brief compliant phrase agent can say now>",  
   "Insight": "<optional extra disclosure or info customer should know>"  
 }
 
-### Key checks & disclosure triggers depending on policy type:
-- If non-term life: confirm Benefit Illustration will be / has been shared before collecting premium.
-- Confirm that CIS (with sum assured, benefits, exclusions, exit/surrender rules, free-look etc.) is or will be provided.
-- For linked/savings-linked/ULIP: clearly distinguish between guaranteed and non-guaranteed benefits; clarify variability.
-- If surrender value/exit/lock-in applies: ensure mention of GSV/SSV/exit charges as per rules.
-- Avoid using words like "fixed returns," "guaranteed high returns" if not true.
-
-Return only valid JSON object. If no issues, return {}."""
+If no compliance issues are detected, return: {}"""
 
             response = self.client.chat.completions.create(
                 model=model,
@@ -91,48 +87,46 @@ Return only valid JSON object. If no issues, return {}."""
             )
 
             # Parse response
-            suggestions = self._parse_response(response.choices[0].message.content)
-            return suggestions
+            raw_response = response.choices[0].message.content
+            print(f"[OpenAI] Raw response from LLM: {raw_response[:500]}...")
+            suggestions = self._parse_response(raw_response)
+            print(f"[OpenAI] Parsed {len(suggestions)} suggestions")
+            return (suggestions, raw_response)
 
         except Exception as e:
             print(f"[OpenAI] Error checking compliance: {e}")
             import traceback
             traceback.print_exc()
-            return [ComplianceSuggestion(
+            error_suggestion = ComplianceSuggestion(
                 type='error',
                 message=f"Error checking compliance: {str(e)}",
                 severity='high',
                 timestamp=datetime.utcnow().isoformat()
-            )]
+            )
+            return ([error_suggestion], f'{{"error": "{str(e)}"}}')
 
     def _build_prompt(self, transcript: str, kb_context: str) -> str:
         """Build OpenAI prompt with transcript and KB context"""
-        return f"""Analyze the following life-insurance sales conversation transcript for IRDAI compliance issues.
+        return f"""Analyze this life-insurance sales conversation for compliance violations.
 
-Compliance Rules & Product Metadata:
+COMPLIANCE RULES (Source of Truth - from Vertex AI Knowledge Base):
 {kb_context}
 
-Conversation Transcript:
+CONVERSATION TRANSCRIPT:
 {transcript}
 
-Analyze this conversation and check for:
-- Missing mandatory disclosures (Benefit Illustration, CIS, free-look period, etc.)
-- Misrepresentation of guaranteed vs non-guaranteed benefits
-- Incorrect use of terms like "fixed returns" or "guaranteed high returns"
-- Missing information about surrender values, exit charges, lock-in periods
-- Any other IRDAI compliance violations
+INSTRUCTIONS:
+1. Review the compliance rules above - these are your source of truth
+2. Analyze the conversation transcript
+3. Identify if the agent is violating any of the compliance rules
+4. Only flag violations that are actually happening in this conversation
+5. If violations are found, provide suggestions based on the compliance rules
 
-If you detect a compliance issue, return a JSON object with this structure:
-{{
-  "Alert": "<short violation/warning>",
-  "Information/Suggestion": "<very brief compliant phrase agent can say now>",
-  "Insight": "<optional extra disclosure or info customer should know>"
-}}
+Return JSON format:
+- If violations found: {{ "Alert": "...", "Information/Suggestion": "...", "Insight": "..." }}
+- If no violations: {{}}
 
-If no compliance issues are detected, return:
-{{}}
-
-Return only valid JSON. Do not include markdown formatting."""
+Return only valid JSON, no markdown."""
 
     def _parse_response(self, response_text: str) -> List[ComplianceSuggestion]:
         """Parse OpenAI response into ComplianceSuggestion objects"""

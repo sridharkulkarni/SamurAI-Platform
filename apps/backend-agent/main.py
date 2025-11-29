@@ -344,21 +344,43 @@ async def backend_websocket(websocket: WebSocket):
                 print(f"[Backend-Agent] Assist request received for call {call_id}, transcript segments: {len(transcript_segments)}")
 
                 try:
-                    # Check compliance
-                    suggestions = await compliance_checker.check_compliance(
+                    # Check compliance (returns tuple: suggestions, raw_llm_response)
+                    result = await compliance_checker.check_compliance(
                         transcript_segments,
                         call_id
                     )
+                    
+                    # Unpack tuple (suggestions, raw_llm_response, kb_context)
+                    if isinstance(result, tuple):
+                        if len(result) == 3:
+                            suggestions, raw_llm_response, kb_context = result
+                        elif len(result) == 2:
+                            suggestions, raw_llm_response = result
+                            kb_context = None
+                        else:
+                            suggestions = result[0] if len(result) > 0 else []
+                            raw_llm_response = None
+                            kb_context = None
+                    else:
+                        suggestions = result if isinstance(result, list) else []
+                        raw_llm_response = None
+                        kb_context = None
 
                     print(f"[Backend-Agent] Compliance check completed, suggestions: {len(suggestions)}")
+                    print(f"[Backend-Agent] Raw LLM response: {raw_llm_response}")
+                    print(f"[Backend-Agent] KB context length: {len(kb_context) if kb_context else 0} characters")
 
                     # Send response (even if empty - frontend will handle it)
+                    suggestions_dict = [s.dict() for s in suggestions]
+                    
                     response = {
                         'type': 'assist_response',
                         'callId': call_id,
                         'timestamp': int(datetime.utcnow().timestamp() * 1000),
                         'data': {
-                            'suggestions': [s.dict() for s in suggestions]
+                            'suggestions': suggestions_dict,
+                            'raw_llm_response': raw_llm_response,  # Add raw response for debugging
+                            'kb_context': kb_context  # Add Vertex AI context for debugging
                         }
                     }
                     await send_to_backend(call_id, response)

@@ -2,7 +2,7 @@
 
 import sys
 import os
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Tuple, Optional
 from datetime import datetime
 
 # Add project root to path for shared imports
@@ -25,7 +25,7 @@ class ComplianceChecker:
         self,
         transcript_segments: List[Dict[str, Any]],
         call_id: str
-    ) -> List[ComplianceSuggestion]:
+    ) -> Tuple[List[ComplianceSuggestion], Optional[str], str]:
         """
         Check compliance for full conversation transcript
         
@@ -34,7 +34,7 @@ class ComplianceChecker:
             call_id: Call ID for context
             
         Returns:
-            List of compliance suggestions
+            Tuple of (List of compliance suggestions, Raw LLM response string, Vertex AI KB context)
         """
         # Format full conversation transcript with speaker labels
         transcript_text = self._format_full_transcript(transcript_segments)
@@ -44,12 +44,12 @@ class ComplianceChecker:
         print(f"[Compliance] Transcript preview (first 500 chars): {transcript_text[:500]}...")
 
         if not transcript_text:
-            return [ComplianceSuggestion(
+            return ([ComplianceSuggestion(
                 type='info',
                 message='No transcript available for compliance check',
                 severity='low',
                 timestamp=datetime.utcnow().isoformat()
-            )]
+            )], None, "No transcript available")
 
         # Query Vertex AI Knowledge Base for compliance rules
         try:
@@ -62,12 +62,24 @@ class ComplianceChecker:
             kb_context = "No compliance rules available (Vertex AI query failed)"
 
         # Check compliance with OpenAI
-        suggestions = await self.openai_client.check_compliance(
+        result = await self.openai_client.check_compliance(
             transcript=transcript_text,
             kb_context=kb_context
         )
+        
+        # result is a tuple: (suggestions, raw_response)
+        if isinstance(result, tuple) and len(result) == 2:
+            suggestions, raw_response = result
+            print(f"[Compliance] Returning {len(suggestions)} suggestions with raw_response: {raw_response[:100] if raw_response else None}...")
+        else:
+            # Fallback if tuple format not returned
+            suggestions = result if isinstance(result, list) else []
+            raw_response = None
+            print(f"[Compliance] Fallback: {len(suggestions)} suggestions, raw_response: {raw_response}")
 
-        return suggestions
+        # Return tuple: (suggestions, raw_response, kb_context)
+        # Include kb_context so frontend can display what was retrieved
+        return suggestions, raw_response, kb_context
 
     def _format_full_transcript(
         self,
@@ -134,10 +146,16 @@ class ComplianceChecker:
             kb_context = "No compliance rules available (Vertex AI query failed)"
 
         # Check compliance for full transcript
-        suggestions = await self.openai_client.check_compliance(
+        result = await self.openai_client.check_compliance(
             transcript=transcript_text,
             kb_context=kb_context
         )
+        
+        # Handle tuple return (suggestions, raw_response)
+        if isinstance(result, tuple) and len(result) == 2:
+            suggestions, _ = result  # Ignore raw_response for post-call report
+        else:
+            suggestions = result if isinstance(result, list) else []
 
         # Count issues by severity
         issues_found = len([s for s in suggestions if s.severity in ['medium', 'high']])

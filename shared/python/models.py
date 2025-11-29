@@ -34,6 +34,7 @@ class ComplianceSuggestion(BaseModel):
     alert: Optional[str] = None  # Short violation/warning
     information: Optional[str] = None  # Compliant phrase agent can say
     insight: Optional[str] = None  # Extra disclosure or info customer should know
+    raw_response: Optional[str] = None  # Raw LLM response for debugging
 
 
 class ComplianceReport(BaseModel):

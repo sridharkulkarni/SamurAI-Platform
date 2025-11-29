@@ -2,7 +2,7 @@
 
 import { FiZap, FiFileText, FiAlertTriangle, FiCheckCircle } from 'react-icons/fi';
 
-export function SentimentPanel({ transcripts = [], suggestions = [], postCallData = null }) {
+export function SentimentPanel({ transcripts = [], suggestions = [], postCallData = null, rawLLMResponse = null, kbContext = null }) {
 
   return (
     <div style={{
@@ -178,15 +178,112 @@ export function SentimentPanel({ transcripts = [], suggestions = [], postCallDat
               );
             })}
           </div>
-        ) : (
+            ) : (
+              <div style={{
+                color: 'var(--color-neutral-400)',
+                fontSize: 'var(--font-size-sm)',
+                fontStyle: 'italic',
+                textAlign: 'center',
+                padding: 'var(--spacing-4)'
+              }}>
+                {rawLLMResponse !== null 
+                  ? 'No compliance issues detected. LLM returned empty response.' 
+                  : 'No suggestions yet. AI will provide recommendations based on the conversation.'}
+              </div>
+            )}
+
+        {/* Vertex AI Context - Debug Section */}
+        {kbContext && (
           <div style={{
-            color: 'var(--color-neutral-400)',
-            fontSize: 'var(--font-size-sm)',
-            fontStyle: 'italic',
-            textAlign: 'center',
-            padding: 'var(--spacing-4)'
+            marginTop: 'var(--spacing-4)',
+            padding: 'var(--spacing-4)',
+            backgroundColor: '#1e3a8a',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--color-neutral-600)',
+            flexShrink: 0
           }}>
-            No suggestions yet. AI will provide recommendations based on the conversation.
+            <div style={{
+              fontWeight: 'var(--font-weight-semibold)',
+              color: '#f1f5f9',
+              marginBottom: 'var(--spacing-2)',
+              fontSize: 'var(--font-size-sm)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--spacing-2)'
+            }}>
+              📚 Vertex AI Context ({kbContext.length} chars)
+            </div>
+            <pre style={{
+              margin: 0,
+              padding: 'var(--spacing-3)',
+              backgroundColor: '#0f172a',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--color-neutral-700)',
+              overflowX: 'auto',
+              fontSize: '11px',
+              fontFamily: 'var(--font-family-mono)',
+              color: '#94a3b8',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+              maxHeight: '400px',
+              overflowY: 'auto',
+              lineHeight: '1.5'
+            }}>
+              {kbContext}
+            </pre>
+          </div>
+        )}
+
+        {/* Raw LLM Response - Debug Section */}
+        {rawLLMResponse !== null && (
+          <div style={{
+            marginTop: 'var(--spacing-4)',
+            padding: 'var(--spacing-4)',
+            backgroundColor: '#1e293b',
+            borderRadius: 'var(--radius-md)',
+            border: '1px solid var(--color-neutral-600)',
+            flexShrink: 0
+          }}>
+            <div style={{
+              fontWeight: 'var(--font-weight-semibold)',
+              color: '#f1f5f9',
+              marginBottom: 'var(--spacing-2)',
+              fontSize: 'var(--font-size-sm)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: 'var(--spacing-2)'
+            }}>
+              🔍 Raw LLM Response (Debug)
+            </div>
+            <pre style={{
+              margin: 0,
+              padding: 'var(--spacing-3)',
+              backgroundColor: '#0f172a',
+              borderRadius: 'var(--radius-sm)',
+              border: '1px solid var(--color-neutral-700)',
+              overflowX: 'auto',
+              fontSize: '11px',
+              fontFamily: 'var(--font-family-mono)',
+              color: '#94a3b8',
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+              maxHeight: '400px',
+              overflowY: 'auto',
+              lineHeight: '1.5'
+            }}>
+              {(() => {
+                try {
+                  // Try to parse and format as JSON
+                  const parsed = typeof rawLLMResponse === 'string' 
+                    ? JSON.parse(rawLLMResponse) 
+                    : rawLLMResponse;
+                  return JSON.stringify(parsed, null, 2);
+                } catch (e) {
+                  // If not valid JSON, show as-is
+                  return rawLLMResponse;
+                }
+              })()}
+            </pre>
           </div>
         )}
       </div>
