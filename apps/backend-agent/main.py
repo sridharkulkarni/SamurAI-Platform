@@ -52,6 +52,23 @@ async def bypass_ngrok_warning(request, call_next):
 # Initialize database
 init_database()
 
+# Verify Vertex AI configuration on startup
+try:
+    from vertex_ai_client import VertexAIClient
+    vertex_client = VertexAIClient()
+    config_status = vertex_client.verify_configuration()
+    print(f"[Backend-Agent] Vertex AI Configuration Status:")
+    print(f"  - Enabled: {config_status['enabled']}")
+    print(f"  - Project ID: {config_status['project_id']}")
+    print(f"  - Location: {config_status['location']}")
+    print(f"  - RAG Corpus ID: {config_status['rag_corpus_id']}")
+    print(f"  - Credentials Available: {config_status['credentials_available']}")
+    print(f"  - Credentials Valid: {config_status['credentials_valid']}")
+    if not config_status['enabled']:
+        print(f"[Backend-Agent] ⚠️  Vertex AI is disabled. Set VERTEX_AI_PROJECT_ID and VERTEX_AI_RAG_CORPUS_ID in .env to enable.")
+except Exception as e:
+    print(f"[Backend-Agent] ⚠️  Could not verify Vertex AI configuration: {e}")
+
 # Global state
 active_calls: Dict[str, Dict[str, Any]] = {}  # call_id -> {deepgram_client, backend_ws, transcripts}
 backend_connections: Dict[str, WebSocket] = {}  # call_id -> backend WebSocket

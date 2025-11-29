@@ -47,9 +47,14 @@ class ComplianceChecker:
                 timestamp=datetime.utcnow().isoformat()
             )]
 
-        # Query Vertex AI Knowledge Base (COMMENTED OUT FOR DEBUGGING)
-        # kb_context = self.vertex_ai_client.get_compliance_context(transcript_text)
-        kb_context = "No compliance rules available (RAG commented out for debugging)"
+        # Query Vertex AI Knowledge Base for compliance rules
+        try:
+            kb_context = self.vertex_ai_client.get_compliance_context(transcript_text)
+            print(f"[Compliance] Retrieved compliance context from Vertex AI (length: {len(kb_context)})")
+        except Exception as e:
+            print(f"[Compliance] Error retrieving Vertex AI context: {e}")
+            # Fallback to empty context if Vertex AI fails
+            kb_context = "No compliance rules available (Vertex AI query failed)"
 
         # Check compliance with OpenAI
         suggestions = await self.openai_client.check_compliance(
@@ -114,9 +119,14 @@ class ComplianceChecker:
                 'suggestions': []
             }
 
-        # Query Vertex AI KB for full context (COMMENTED OUT FOR DEBUGGING)
-        # kb_context = self.vertex_ai_client.get_compliance_context(transcript_text)
-        kb_context = "No compliance rules available (RAG commented out for debugging)"
+        # Query Vertex AI KB for full context
+        try:
+            kb_context = self.vertex_ai_client.get_compliance_context(transcript_text)
+            print(f"[Compliance] Retrieved compliance context from Vertex AI for post-call report (length: {len(kb_context)})")
+        except Exception as e:
+            print(f"[Compliance] Error retrieving Vertex AI context for post-call report: {e}")
+            # Fallback to empty context if Vertex AI fails
+            kb_context = "No compliance rules available (Vertex AI query failed)"
 
         # Check compliance for full transcript
         suggestions = await self.openai_client.check_compliance(
